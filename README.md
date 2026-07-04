@@ -6,8 +6,37 @@ unified points system, and a global leaderboard ranks users by total points. A
 personal dashboard visualizes each user's activity history.
 
 This is a monorepo: `backend/` (ASP.NET Core API) and `frontend/` (Angular).
-See [PLAN.md](PLAN.md) for the overall direction, including a planned Docker
-Compose setup to run the whole stack with one command.
+See [PLAN.md](PLAN.md) for the overall direction.
+
+**Ports are non-default on purpose** (`1` prepended to whichever port each
+tool normally picks) so they don't collide with anything else you might
+already have running: API on `15236`/`17039`, frontend on `14200`.
+
+## Running everything with Docker (recommended)
+
+Prerequisites: Docker Desktop (with Compose).
+
+```bash
+docker compose up --build
+```
+
+This builds and starts both containers:
+- **API** — multi-stage .NET build, on `http://localhost:15236`. The SQLite
+  database file lives on a named volume (`db-data`), so data survives
+  container restarts and `docker compose down`/`up` cycles (use
+  `docker compose down -v` to wipe it).
+- **Frontend** — multi-stage Node build served by nginx, on
+  `http://localhost:14200`. nginx proxies `/api/*` to the API container over
+  the internal Compose network, the same shape as the Angular dev-server
+  proxy used for local development.
+
+Open `http://localhost:14200` once both containers report as started.
+
+To stop:
+
+```bash
+docker compose down
+```
 
 ## Tech stack
 
@@ -18,7 +47,9 @@ Compose setup to run the whole stack with one command.
 - **API docs:** Swagger UI via Swashbuckle.AspNetCore
 - **Frontend:** Angular 22, Angular Material (dark, Material 3 violet theme), Chart.js via ng2-charts
 
-## Running the backend locally
+## Running without Docker
+
+### Backend
 
 Prerequisites: [.NET 10 SDK](https://dotnet.microsoft.com/download).
 
@@ -32,10 +63,10 @@ migrations are applied on startup — no manual `dotnet ef database update` step
 is required.
 
 Once running:
-- Swagger UI: `https://localhost:<port>/swagger`
-- API base URL: `https://localhost:<port>/api`
+- Swagger UI: `https://localhost:17039/swagger`
+- API base URL: `https://localhost:17039/api` (or `http://localhost:15236/api`)
 
-## Running the frontend locally
+### Frontend
 
 Prerequisites: Node.js ≥22.22 and npm.
 
@@ -45,11 +76,11 @@ npm install
 npm start
 ```
 
-Serves on `http://localhost:4200` with a dev-server proxy (`proxy.conf.json`)
-forwarding `/api/*` to the backend at `http://localhost:5236` — run the backend
-first (see above). On first visit you'll be redirected to registration; after
-registering you land on your personal dashboard and can log activities from
-there, or browse the global leaderboard.
+Serves on `http://localhost:14200` with a dev-server proxy (`proxy.conf.json`)
+forwarding `/api/*` to the backend at `http://localhost:15236` — run the
+backend first (see above). On first visit you'll be redirected to
+registration; after registering you land on your personal dashboard and can
+log activities from there, or browse the global leaderboard.
 
 ## Seeding demo data
 
