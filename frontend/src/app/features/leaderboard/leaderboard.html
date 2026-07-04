@@ -20,6 +20,7 @@
   } @else if (entries().length === 0) {
     <div class="empty-state">No users registered yet.</div>
   } @else {
+    <div class="table-scroll">
     <table mat-table [dataSource]="entries()" class="leaderboard-table">
       <ng-container matColumnDef="rank">
         <th mat-header-cell *matHeaderCellDef>#</th>
@@ -59,10 +60,13 @@
         mat-row
         *matRowDef="let row; columns: displayedColumns"
         class="clickable-row"
+        role="button"
+        [attr.aria-label]="'View ' + row.firstName + ' ' + row.lastName + '\'s dashboard'"
         (click)="viewDashboard(row.userId)"
         tabindex="0"
         (keyup.enter)="viewDashboard(row.userId)"
       ></tr>
     </table>
+    </div>
   }
 </div>

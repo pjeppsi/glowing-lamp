@@ -96,13 +96,14 @@
 
       <div class="chart-card heatmap-card">
         <h2>Last 28 Days</h2>
-        <div class="heatmap">
+        <div class="heatmap" role="img" aria-label="Points earned per day over the last 28 days">
           @for (day of heatmapDays(); track day.date) {
             <div
               class="heatmap-cell"
               [style.opacity]="day.points > 0 ? 0.25 + day.intensity * 0.75 : 1"
               [class.empty]="day.points === 0"
               [title]="day.date + ': ' + day.points + ' points'"
+              [attr.aria-label]="day.date + ': ' + day.points + ' points'"
             ></div>
           }
         </div>
@@ -110,6 +111,7 @@
 
       <div class="chart-card">
         <h2>Recent Activities</h2>
+        <div class="table-scroll">
         <table mat-table [dataSource]="recentActivities()">
           <ng-container matColumnDef="date">
             <th mat-header-cell *matHeaderCellDef>Date</th>
@@ -137,6 +139,7 @@
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
         </table>
+        </div>
       </div>
     }
   }

@@ -1,5 +1,10 @@
+.table-scroll {
+  overflow-x: auto;
+}
+
 .leaderboard-table {
   width: 100%;
+  min-width: 480px;
   background: var(--fc-card);
   border: 1px solid var(--fc-border);
   border-radius: var(--fc-radius);

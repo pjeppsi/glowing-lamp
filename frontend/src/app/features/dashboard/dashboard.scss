@@ -152,8 +152,13 @@
   font-weight: 600;
 }
 
+.table-scroll {
+  overflow-x: auto;
+}
+
 table {
   width: 100%;
+  min-width: 480px;
 }
 
 @media (max-width: 900px) {
