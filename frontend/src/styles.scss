@@ -70,10 +70,18 @@ body {
   padding: 32px 24px;
 }
 
+@media (max-width: 600px) {
+  .page-container {
+    padding: 20px 16px;
+  }
+}
+
 .page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
   margin-bottom: 24px;
 
   h1 {
