@@ -104,6 +104,10 @@ components.
   read. This avoids concurrent-update races on a shared counter at the cost
   of recomputing the aggregate each time, which is an acceptable trade-off at
   this scale.
+- Tied leaderboard scores share the same rank, using "dense" ranking — two
+  users tied at the top are both rank 1 and the next distinct score is rank 2,
+  not 3. Ties are also broken deterministically by name (last, then first) so
+  tied users don't reorder between calls with no underlying data change.
 - Leaderboard rank "trend" (up/down movement) has no server-side mechanism —
   the spec does not define what a trend is measured against (previous day?
   previous request?), so the backend leaves it out rather than guessing.
