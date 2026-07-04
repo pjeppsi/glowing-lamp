@@ -1,0 +1,17 @@
+mat-dialog-content {
+  min-width: 360px;
+}
+
+.hint {
+  color: var(--fc-text-secondary);
+  font-size: 0.85rem;
+  margin: 0 0 12px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+}

@@ -1,12 +1,6 @@
-.leaderboard-layout {
-  display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  gap: 16px;
-  align-items: start;
-}
-
 .table-scroll {
   overflow-x: auto;
+  margin-bottom: 16px;
 }
 
 .leaderboard-table {
@@ -68,19 +62,39 @@
   text-transform: uppercase;
 }
 
-.chart-card {
-  background: var(--fc-card);
+.comparison-panel {
+  background: var(--fc-card) !important;
   border: 1px solid var(--fc-border);
-  border-radius: var(--fc-radius);
-  box-shadow: var(--fc-shadow);
-  padding: 20px;
+  border-radius: var(--fc-radius) !important;
+  box-shadow: var(--fc-shadow) !important;
 
   h2 {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-size: 0.9rem;
     font-weight: 600;
     color: var(--fc-text-secondary);
-    margin: 0 0 16px;
+    margin: 16px 0;
   }
+}
+
+.info-icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  color: var(--fc-text-muted);
+  cursor: help;
+
+  &:focus-visible {
+    outline: 2px solid var(--fc-border-focus);
+    outline-offset: 2px;
+    border-radius: 50%;
+  }
+}
+
+.comparison-toolbar {
+  padding: 8px 0 16px;
 }
 
 .chart-wrap {
@@ -88,7 +102,7 @@
   height: 220px;
 }
 
-.radar-wrap {
+.comparison-wrap {
   height: 260px;
 }
 
@@ -102,8 +116,8 @@
   margin: 12px 0 0;
   padding: 0;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 8px 16px;
 
   li {
     display: flex;
@@ -122,10 +136,4 @@
 
 .legend-label {
   color: var(--fc-text-primary);
-}
-
-@media (max-width: 900px) {
-  .leaderboard-layout {
-    grid-template-columns: 1fr;
-  }
 }

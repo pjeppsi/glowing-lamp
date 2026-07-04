@@ -20,77 +20,107 @@
   } @else if (entries().length === 0) {
     <div class="empty-state">No users registered yet.</div>
   } @else {
-    <div class="leaderboard-layout">
-      <div class="table-scroll">
-        <table mat-table [dataSource]="entries()" class="leaderboard-table">
-          <ng-container matColumnDef="rank">
-            <th mat-header-cell *matHeaderCellDef>#</th>
-            <td mat-cell *matCellDef="let entry">{{ entry.rank }}</td>
-          </ng-container>
+    <div class="table-scroll">
+      <table mat-table [dataSource]="entries()" class="leaderboard-table">
+        <ng-container matColumnDef="rank">
+          <th mat-header-cell *matHeaderCellDef>#</th>
+          <td mat-cell *matCellDef="let entry">{{ entry.rank }}</td>
+        </ng-container>
 
-          <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef>Name</th>
-            <td mat-cell *matCellDef="let entry">
-              {{ entry.firstName }} {{ entry.lastName }}
-              @if (entry.userId === currentUserService.user()?.id) {
-                <span class="you-badge">You</span>
-              }
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="points">
-            <th mat-header-cell *matHeaderCellDef>Points</th>
-            <td mat-cell *matCellDef="let entry" class="points-cell">{{ entry.totalPoints }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="trend">
-            <th mat-header-cell *matHeaderCellDef>Trend</th>
-            <td mat-cell *matCellDef="let entry">
-              <mat-icon
-                class="trend-{{ entry.trend }}"
-                [attr.aria-label]="trendLabel(entry.trend)"
-                [title]="trendLabel(entry.trend)"
-              >
-                {{ trendIcon(entry.trend) }}
-              </mat-icon>
-            </td>
-          </ng-container>
-
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr
-            mat-row
-            *matRowDef="let row; columns: displayedColumns"
-            class="clickable-row"
-            role="button"
-            [attr.aria-label]="'View ' + row.firstName + ' ' + row.lastName + '\'s dashboard'"
-            (click)="viewDashboard(row.userId)"
-            tabindex="0"
-            (keyup.enter)="viewDashboard(row.userId)"
-          ></tr>
-        </table>
-      </div>
-
-      <div class="chart-card radar-card">
-        <h2>Top {{ radarLegend().length }} Sport Profile</h2>
-        @if (radarLoading()) {
-          <div class="loading-state small">
-            <mat-icon>bolt</mat-icon>
-            <span>Loading…</span>
-          </div>
-        } @else if (radarChartData(); as data) {
-          <div class="chart-wrap radar-wrap">
-            <canvas baseChart [type]="'radar'" [data]="data" [options]="radarChartOptions"></canvas>
-          </div>
-          <ul class="breakdown-legend">
-            @for (item of radarLegend(); track item.name) {
-              <li>
-                <span class="swatch" [style.background]="item.color"></span>
-                <span class="legend-label">{{ item.name }}</span>
-              </li>
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Name</th>
+          <td mat-cell *matCellDef="let entry">
+            {{ entry.firstName }} {{ entry.lastName }}
+            @if (entry.userId === currentUserService.user()?.id) {
+              <span class="you-badge">You</span>
             }
-          </ul>
-        }
-      </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="points">
+          <th mat-header-cell *matHeaderCellDef>Points</th>
+          <td mat-cell *matCellDef="let entry" class="points-cell">{{ entry.totalPoints }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="trend">
+          <th mat-header-cell *matHeaderCellDef>Trend</th>
+          <td mat-cell *matCellDef="let entry">
+            <mat-icon
+              class="trend-{{ entry.trend }}"
+              [attr.aria-label]="trendLabel(entry.trend)"
+              [title]="trendLabel(entry.trend)"
+            >
+              {{ trendIcon(entry.trend) }}
+            </mat-icon>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: displayedColumns"
+          class="clickable-row"
+          role="button"
+          [attr.aria-label]="'View ' + row.firstName + ' ' + row.lastName + '\'s dashboard'"
+          (click)="viewDashboard(row.userId)"
+          tabindex="0"
+          (keyup.enter)="viewDashboard(row.userId)"
+        ></tr>
+      </table>
     </div>
+
+    <mat-expansion-panel class="comparison-panel">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <mat-icon>bar_chart</mat-icon>
+          Usporedba korisnika
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+
+      <div class="comparison-toolbar">
+        <button mat-stroked-button color="primary" (click)="openCompareDialog()">
+          <mat-icon>checklist</mat-icon>
+          Označi za usporedbu
+        </button>
+      </div>
+
+      @if (comparisonLoading()) {
+        <div class="loading-state small">
+          <mat-icon>bolt</mat-icon>
+          <span>Loading…</span>
+        </div>
+      } @else if (comparisonChartData(); as data) {
+        <h2>
+          Points Over Time
+          <mat-icon
+            class="info-icon"
+            tabindex="0"
+            [matTooltip]="comparisonChartInfo"
+            aria-label="Chart legend"
+            >info_outline</mat-icon
+          >
+        </h2>
+        <div class="chart-wrap comparison-wrap">
+          <canvas
+            baseChart
+            [type]="'line'"
+            [data]="data"
+            [options]="comparisonChartOptions"
+          ></canvas>
+        </div>
+        <ul class="breakdown-legend">
+          @for (item of comparisonLegend(); track item.name) {
+            <li>
+              <span class="swatch" [style.background]="item.color"></span>
+              <span class="legend-label">{{ item.name }}</span>
+            </li>
+          }
+        </ul>
+      } @else {
+        <div class="empty-state">
+          No users selected yet. Click "Označi za usporedbu" to choose up to 5 users.
+        </div>
+      }
+    </mat-expansion-panel>
   }
 </div>
