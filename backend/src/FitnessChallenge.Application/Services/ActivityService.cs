@@ -56,22 +56,39 @@ public class ActivityService : IActivityService
         var summaries = await _activityRepository.GetLeaderboardAsync(cancellationToken);
         var pointsByUserId = summaries.ToDictionary(s => s.UserId, s => s.TotalPoints);
 
-        return users
-            .Select(u => new
-            {
-                User = u,
-                TotalPoints = pointsByUserId.GetValueOrDefault(u.Id, 0)
-            })
+        // Secondary sort by name gives a deterministic order among tied users —
+        // GetAllAsync has no defined order of its own, and relying on it would
+        // let tied users swap positions between calls with no data change.
+        var sorted = users
+            .Select(u => new { User = u, TotalPoints = pointsByUserId.GetValueOrDefault(u.Id, 0) })
             .OrderByDescending(x => x.TotalPoints)
-            .Select((x, index) => new LeaderboardEntryResponse
+            .ThenBy(x => x.User.LastName)
+            .ThenBy(x => x.User.FirstName)
+            .ToList();
+
+        var result = new List<LeaderboardEntryResponse>(sorted.Count);
+        var rank = 0;
+        int? previousPoints = null;
+
+        foreach (var x in sorted)
+        {
+            if (previousPoints is null || x.TotalPoints != previousPoints.Value)
             {
-                Rank = index + 1,
+                rank++;
+            }
+            previousPoints = x.TotalPoints;
+
+            result.Add(new LeaderboardEntryResponse
+            {
+                Rank = rank,
                 UserId = x.User.Id,
                 FirstName = x.User.FirstName,
                 LastName = x.User.LastName,
                 TotalPoints = x.TotalPoints
-            })
-            .ToList();
+            });
+        }
+
+        return result;
     }
 
     private static ActivityResponse ToResponse(Activity activity) => new()
