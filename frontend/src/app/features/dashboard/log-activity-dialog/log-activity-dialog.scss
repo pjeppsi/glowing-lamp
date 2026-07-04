@@ -1,0 +1,25 @@
+mat-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 320px;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+.duration-row {
+  display: flex;
+  gap: 12px;
+
+  mat-form-field {
+    flex: 1;
+  }
+}
+
+.server-error {
+  color: var(--fc-red);
+  font-size: 0.8rem;
+  margin: 0;
+}

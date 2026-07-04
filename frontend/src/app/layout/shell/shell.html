@@ -1,0 +1,86 @@
+<mat-sidenav-container class="app-shell">
+  <mat-sidenav
+    class="sidebar"
+    [mode]="isMobile() ? 'over' : 'side'"
+    [opened]="!isMobile() || mobileMenuOpen()"
+    (closed)="closeMobileMenu()"
+  >
+    <div class="sidebar-inner">
+      <div class="logo">
+        <mat-icon>bolt</mat-icon>
+        <span>Fitness Challenge</span>
+      </div>
+
+      <nav>
+        <span class="nav-section-label">Menu</span>
+        <a
+          routerLink="/leaderboard"
+          routerLinkActive="active"
+          class="nav-item"
+          (click)="closeMobileMenu()"
+        >
+          <mat-icon>leaderboard</mat-icon>
+          <span>Leaderboard</span>
+        </a>
+        @if (currentUserService.user(); as user) {
+          <a
+            [routerLink]="['/dashboard', user.id]"
+            routerLinkActive="active"
+            class="nav-item"
+            (click)="closeMobileMenu()"
+          >
+            <mat-icon>bar_chart</mat-icon>
+            <span>Dashboard</span>
+          </a>
+        }
+      </nav>
+
+      @if (currentUserService.user(); as user) {
+        <div class="user-card">
+          <div class="user-info">
+            <span class="user-name">{{ user.firstName }} {{ user.lastName }}</span>
+            <span class="user-meta">Current user</span>
+          </div>
+          <button
+            type="button"
+            class="logout-btn"
+            (click)="switchUser()"
+            title="Switch user"
+            aria-label="Switch user"
+          >
+            <mat-icon>logout</mat-icon>
+          </button>
+        </div>
+      } @else {
+        <a
+          routerLink="/register"
+          class="register-cta"
+          (click)="closeMobileMenu()"
+        >
+          <mat-icon>person_add</mat-icon>
+          <span>Register</span>
+        </a>
+      }
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="content">
+    @if (isMobile()) {
+      <div class="mobile-topbar">
+        <button
+          type="button"
+          class="menu-toggle"
+          (click)="toggleMobileMenu()"
+          aria-label="Toggle menu"
+        >
+          <mat-icon>menu</mat-icon>
+        </button>
+        <div class="logo">
+          <mat-icon>bolt</mat-icon>
+          <span>Fitness Challenge</span>
+        </div>
+      </div>
+    }
+    <router-outlet />
+  </mat-sidenav-content>
+</mat-sidenav-container>

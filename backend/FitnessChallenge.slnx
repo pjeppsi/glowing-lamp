@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FitnessChallenge.Api/FitnessChallenge.Api.csproj" />
+    <Project Path="src/FitnessChallenge.Application/FitnessChallenge.Application.csproj" />
+    <Project Path="src/FitnessChallenge.Domain/FitnessChallenge.Domain.csproj" />
+    <Project Path="src/FitnessChallenge.Infrastructure/FitnessChallenge.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FitnessChallenge.Api.Tests/FitnessChallenge.Api.Tests.csproj" />
+    <Project Path="tests/FitnessChallenge.Application.Tests/FitnessChallenge.Application.Tests.csproj" />
+  </Folder>
+</Solution>

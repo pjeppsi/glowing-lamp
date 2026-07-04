@@ -1,0 +1,158 @@
+@use '@angular/material' as mat;
+
+html {
+  height: 100%;
+  color-scheme: dark;
+
+  @include mat.theme(
+    (
+      color: (
+        theme-type: dark,
+        primary: mat.$violet-palette,
+        tertiary: mat.$violet-palette,
+      ),
+      typography: (
+        plain-family: Inter,
+        brand-family: Inter,
+      ),
+      density: 0,
+    )
+  );
+
+  // Design tokens — see DESIGN_HANDOFF.md. Always reference these, never
+  // hardcode hex values in component styles.
+  --fc-bg: #09090d;
+  --fc-surface: #111116;
+  --fc-card: #16161e;
+  --fc-card-hover: #1c1c26;
+  --fc-border: rgba(255, 255, 255, 0.07);
+  --fc-border-focus: rgba(139, 92, 246, 0.5);
+
+  --fc-text-primary: #f4f4f8;
+  --fc-text-secondary: #8b8ba8;
+  --fc-text-muted: #55556a;
+
+  --fc-accent: #8b5cf6;
+  --fc-accent-light: #a78bfa;
+  --fc-accent-dim: rgba(139, 92, 246, 0.12);
+  --fc-green: #10b981;
+  --fc-red: #ef4444;
+  --fc-amber: #f59e0b;
+  --fc-blue: #3b82f6;
+
+  --fc-radius-sm: 8px;
+  --fc-radius: 12px;
+  --fc-radius-lg: 16px;
+  --fc-radius-xl: 24px;
+
+  --fc-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --fc-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --fc-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
+
+  --fc-sidebar-w: 240px;
+
+  // Material 3's dialog surface color isn't set by mat.theme() for a custom
+  // dark palette — without this, mat-dialog renders with a transparent
+  // surface and the page behind it bleeds through.
+  --mdc-dialog-container-color: var(--fc-card);
+  --mdc-dialog-subhead-color: var(--fc-text-primary);
+  --mdc-dialog-supporting-text-color: var(--fc-text-secondary);
+}
+
+.mat-mdc-dialog-container .mdc-dialog__surface {
+  border: 1px solid var(--fc-border);
+  box-shadow: var(--fc-shadow-lg);
+}
+
+body {
+  background-color: var(--fc-bg);
+  color: var(--fc-text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  margin: 0;
+  height: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.page-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+@media (max-width: 600px) {
+  .page-container {
+    padding: 20px 16px;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    padding-left: calc(16px + env(safe-area-inset-left));
+    padding-right: calc(16px + env(safe-area-inset-right));
+  }
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+
+  h1 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0;
+
+    mat-icon {
+      width: 22px;
+      height: 22px;
+      font-size: 22px;
+    }
+  }
+}
+
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 80px 0;
+  color: var(--fc-text-secondary);
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--fc-text-muted);
+  padding: 40px;
+  font-size: 0.875rem;
+}
+
+// Leaderboard rank trend semantics — do not change without reason.
+.trend-up {
+  color: var(--fc-green);
+}
+.trend-down {
+  color: var(--fc-red);
+}
+.trend-same {
+  color: var(--fc-text-muted);
+}
+.trend-new {
+  color: var(--fc-amber);
+}
+
+.success-snack {
+  --mdc-snackbar-container-color: #064e3b;
+  border: 1px solid #065f46;
+}
+.error-snack {
+  --mdc-snackbar-container-color: #450a0a;
+  border: 1px solid #7f1d1d;
+}

@@ -1,0 +1,23 @@
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: src/FitnessChallenge.Api/Dockerfile
+    ports:
+      - "15236:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Data Source=/app/data/fitnesschallenge.db
+    volumes:
+      - db-data:/app/data
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "14200:80"
+    depends_on:
+      - api
+
+volumes:
+  db-data:

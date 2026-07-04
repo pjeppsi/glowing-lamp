@@ -1,0 +1,139 @@
+.table-scroll {
+  overflow-x: auto;
+  margin-bottom: 16px;
+}
+
+.leaderboard-table {
+  width: 100%;
+  min-width: 480px;
+  background: var(--fc-card);
+  border: 1px solid var(--fc-border);
+  border-radius: var(--fc-radius);
+  overflow: hidden;
+
+  th {
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    color: var(--fc-text-muted);
+  }
+
+  td,
+  th {
+    padding: 0 16px;
+  }
+
+  tr.mat-mdc-row,
+  tr.mat-mdc-header-row {
+    border-bottom: 1px solid var(--fc-border);
+  }
+
+  tr.mat-mdc-row:last-child {
+    border-bottom: none;
+  }
+}
+
+.clickable-row {
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--fc-border-focus);
+    outline-offset: -2px;
+  }
+}
+
+.points-cell {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.you-badge {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: var(--fc-radius-sm);
+  background: var(--fc-accent-dim);
+  color: var(--fc-accent-light);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.comparison-panel {
+  background: var(--fc-card) !important;
+  border: 1px solid var(--fc-border);
+  border-radius: var(--fc-radius) !important;
+  box-shadow: var(--fc-shadow) !important;
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--fc-text-secondary);
+    margin: 16px 0;
+  }
+}
+
+.info-icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  color: var(--fc-text-muted);
+  cursor: help;
+
+  &:focus-visible {
+    outline: 2px solid var(--fc-border-focus);
+    outline-offset: 2px;
+    border-radius: 50%;
+  }
+}
+
+.comparison-toolbar {
+  padding: 8px 0 16px;
+}
+
+.chart-wrap {
+  position: relative;
+  height: 220px;
+}
+
+.comparison-wrap {
+  height: 260px;
+}
+
+.loading-state.small {
+  padding: 40px 0;
+  gap: 8px;
+}
+
+.breakdown-legend {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+  }
+}
+
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.legend-label {
+  color: var(--fc-text-primary);
+}

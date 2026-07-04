@@ -1,0 +1,233 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.app-shell {
+  height: 100%;
+  background: var(--fc-bg);
+}
+
+.sidebar {
+  width: var(--fc-sidebar-w);
+  background: var(--fc-surface) !important;
+  border-right: 1px solid var(--fc-border);
+
+  // Sidebar content (logo + a couple of nav links + one card) always fits
+  // within the viewport height — no internal scrollbar on desktop.
+  height: 100%;
+  overflow: hidden;
+}
+
+// mat-sidenav renders its content inside its own internal wrapper (block
+// layout, not flex), so this element — not .sidebar itself — is what needs
+// to be the flex column for "margin-top: auto" to push the last item down.
+.sidebar-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 20px 16px;
+  padding-top: calc(20px + env(safe-area-inset-top));
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: var(--fc-radius-sm);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--fc-text-primary);
+  margin-bottom: 24px;
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    color: var(--fc-accent-light);
+  }
+}
+
+nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-section-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fc-text-muted);
+  padding: 0 8px;
+  margin-bottom: 8px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px;
+  border-radius: var(--fc-radius-sm);
+  color: var(--fc-text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+
+  &:hover {
+    background: var(--fc-card-hover);
+    color: var(--fc-text-primary);
+  }
+
+  &.active {
+    background: var(--fc-accent-dim);
+    color: var(--fc-accent-light);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--fc-border-focus);
+    outline-offset: 2px;
+  }
+}
+
+.user-card {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 8px;
+  border-radius: var(--fc-radius-sm);
+  border: 1px solid var(--fc-border);
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.user-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--fc-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-meta {
+  font-size: 0.7rem;
+  color: var(--fc-text-muted);
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--fc-text-secondary);
+  border-radius: var(--fc-radius-sm);
+  padding: 6px;
+
+  mat-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+  }
+
+  &:hover {
+    color: var(--fc-red);
+    background: var(--fc-card-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--fc-border-focus);
+    outline-offset: 2px;
+  }
+}
+
+.register-cta {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 8px;
+  border-radius: var(--fc-radius-sm);
+  border: 1px solid var(--fc-border-focus);
+  color: var(--fc-accent-light);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+
+  &:hover {
+    background: var(--fc-accent-dim);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--fc-border-focus);
+    outline-offset: 2px;
+  }
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  padding-top: calc(12px + env(safe-area-inset-top));
+  padding-left: calc(16px + env(safe-area-inset-left));
+  padding-right: calc(16px + env(safe-area-inset-right));
+  border-bottom: 1px solid var(--fc-border);
+  background: var(--fc-surface);
+
+  .logo {
+    margin-bottom: 0;
+  }
+}
+
+.menu-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--fc-text-secondary);
+  border-radius: var(--fc-radius-sm);
+  padding: 6px;
+
+  &:hover {
+    color: var(--fc-text-primary);
+    background: var(--fc-card-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--fc-border-focus);
+    outline-offset: 2px;
+  }
+}

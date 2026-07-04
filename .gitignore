@@ -1,0 +1,23 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+## SQLite
+*.db
+*.db-shm
+*.db-wal
+
+## Angular / Node
+node_modules/
+dist/
+.angular/
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Local task reference material (not part of the deliverable)
+/upute/
