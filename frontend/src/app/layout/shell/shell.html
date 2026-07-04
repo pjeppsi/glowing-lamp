@@ -1,0 +1,48 @@
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="logo">
+      <mat-icon>bolt</mat-icon>
+      <span>Fitness Challenge</span>
+    </div>
+
+    <nav>
+      <span class="nav-section-label">Menu</span>
+      <a routerLink="/leaderboard" routerLinkActive="active" class="nav-item">
+        <mat-icon>leaderboard</mat-icon>
+        <span>Leaderboard</span>
+      </a>
+      @if (currentUserService.user(); as user) {
+        <a
+          [routerLink]="['/dashboard', user.id]"
+          routerLinkActive="active"
+          class="nav-item"
+        >
+          <mat-icon>bar_chart</mat-icon>
+          <span>Dashboard</span>
+        </a>
+      }
+    </nav>
+
+    @if (currentUserService.user(); as user) {
+      <div class="user-card">
+        <div class="user-info">
+          <span class="user-name">{{ user.firstName }} {{ user.lastName }}</span>
+          <span class="user-meta">Current user</span>
+        </div>
+        <button
+          type="button"
+          class="logout-btn"
+          (click)="switchUser()"
+          title="Switch user"
+          aria-label="Switch user"
+        >
+          <mat-icon>logout</mat-icon>
+        </button>
+      </div>
+    }
+  </aside>
+
+  <main class="content">
+    <router-outlet />
+  </main>
+</div>
