@@ -185,13 +185,14 @@ export class Dashboard {
     }
     const max = Math.max(1, ...byDay.values());
 
+    // Stay in UTC throughout — activity.dateTime is a UTC ISO string, and
+    // mixing local-time day boundaries with toISOString() here would shift
+    // "today" onto the wrong UTC date for users ahead of/behind UTC.
     const days: { date: string; points: number; intensity: number }[] = [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
     for (let i = 27; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(d.getDate() - i);
-      const key = d.toISOString().slice(0, 10);
+      const key = new Date(todayUtc - i * 86_400_000).toISOString().slice(0, 10);
       const points = byDay.get(key) ?? 0;
       days.push({ date: key, points, intensity: points / max });
     }

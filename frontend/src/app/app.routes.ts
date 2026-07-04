@@ -13,6 +13,7 @@ export const routes: Routes = [
       {
         path: '',
         pathMatch: 'full',
+        children: [],
         canActivate: [
           () => {
             const currentUser = inject(CurrentUserService).user();
