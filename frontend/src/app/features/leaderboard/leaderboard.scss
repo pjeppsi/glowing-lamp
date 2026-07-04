@@ -1,0 +1,57 @@
+.leaderboard-table {
+  width: 100%;
+  background: var(--fc-card);
+  border: 1px solid var(--fc-border);
+  border-radius: var(--fc-radius);
+  overflow: hidden;
+
+  th {
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    color: var(--fc-text-muted);
+  }
+
+  td,
+  th {
+    padding: 0 16px;
+  }
+
+  tr.mat-mdc-row,
+  tr.mat-mdc-header-row {
+    border-bottom: 1px solid var(--fc-border);
+  }
+
+  tr.mat-mdc-row:last-child {
+    border-bottom: none;
+  }
+}
+
+.clickable-row {
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--fc-border-focus);
+    outline-offset: -2px;
+  }
+}
+
+.points-cell {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.you-badge {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: var(--fc-radius-sm);
+  background: var(--fc-accent-dim);
+  color: var(--fc-accent-light);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
