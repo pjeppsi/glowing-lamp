@@ -100,50 +100,6 @@ export class Dashboard {
       }));
   });
 
-  private static readonly WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-  protected readonly weeklyPatternChartData = computed<ChartConfiguration<'radar'>['data']>(() => {
-    // getUTCDay() is 0=Sunday..6=Saturday; rotate so the week reads Mon..Sun.
-    const pointsByWeekday = new Array<number>(7).fill(0);
-    for (const activity of this.activities()) {
-      const jsDay = new Date(activity.dateTime).getUTCDay();
-      const mondayFirstIndex = (jsDay + 6) % 7;
-      pointsByWeekday[mondayFirstIndex] += activity.points;
-    }
-    return {
-      labels: Dashboard.WEEKDAY_LABELS,
-      datasets: [
-        {
-          label: 'Points',
-          data: pointsByWeekday,
-          borderColor: '#a78bfa',
-          backgroundColor: 'rgba(139, 92, 246, 0.2)',
-          pointBackgroundColor: '#a78bfa',
-          pointRadius: 3,
-          pointHoverRadius: 6,
-          borderWidth: 2,
-        },
-      ],
-    };
-  });
-
-  protected readonly weeklyPatternChartOptions: ChartConfiguration<'radar'>['options'] = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-    },
-    scales: {
-      r: {
-        beginAtZero: true,
-        angleLines: { color: GRID },
-        grid: { color: GRID },
-        pointLabels: { color: MUTED, font: CHART_FONT },
-        ticks: { color: MUTED, backdropColor: 'transparent' },
-      },
-    },
-  };
-
   protected readonly volumeChartData = computed<ChartConfiguration<'line'>['data']>(() => {
     const byDay = new Map<string, number>();
     for (const activity of this.activities()) {

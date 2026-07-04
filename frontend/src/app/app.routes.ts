@@ -28,6 +28,7 @@ export const routes: Routes = [
       },
       {
         path: 'leaderboard',
+        providers: [provideCharts(withDefaultRegisterables())],
         loadComponent: () =>
           import('./features/leaderboard/leaderboard').then((m) => m.Leaderboard),
       },

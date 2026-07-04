@@ -1,3 +1,10 @@
+.leaderboard-layout {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
 .table-scroll {
   overflow-x: auto;
 }
@@ -59,4 +66,66 @@
   font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
+}
+
+.chart-card {
+  background: var(--fc-card);
+  border: 1px solid var(--fc-border);
+  border-radius: var(--fc-radius);
+  box-shadow: var(--fc-shadow);
+  padding: 20px;
+
+  h2 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--fc-text-secondary);
+    margin: 0 0 16px;
+  }
+}
+
+.chart-wrap {
+  position: relative;
+  height: 220px;
+}
+
+.radar-wrap {
+  height: 260px;
+}
+
+.loading-state.small {
+  padding: 40px 0;
+  gap: 8px;
+}
+
+.breakdown-legend {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+  }
+}
+
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.legend-label {
+  color: var(--fc-text-primary);
+}
+
+@media (max-width: 900px) {
+  .leaderboard-layout {
+    grid-template-columns: 1fr;
+  }
 }
