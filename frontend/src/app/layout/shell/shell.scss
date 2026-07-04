@@ -4,18 +4,23 @@
 }
 
 .app-shell {
-  display: flex;
-  min-height: 100vh;
+  height: 100%;
+  background: var(--fc-bg);
 }
 
 .sidebar {
   width: var(--fc-sidebar-w);
-  flex-shrink: 0;
-  background: var(--fc-surface);
+  background: var(--fc-surface) !important;
   border-right: 1px solid var(--fc-border);
   display: flex;
   flex-direction: column;
   padding: 20px 16px;
+  box-sizing: border-box;
+
+  // Sidebar content (logo + a couple of nav links + one card) always fits
+  // within the viewport height — no internal scrollbar on desktop.
+  height: 100%;
+  overflow: hidden;
 }
 
 .logo {
@@ -145,36 +150,72 @@ nav {
   }
 }
 
-.content {
-  flex: 1;
-  min-width: 0;
-  overflow-y: auto;
+.register-cta {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 8px;
+  border-radius: var(--fc-radius-sm);
+  border: 1px solid var(--fc-border-focus);
+  color: var(--fc-accent-light);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+
+  &:hover {
+    background: var(--fc-accent-dim);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--fc-border-focus);
+    outline-offset: 2px;
+  }
 }
 
-@media (max-width: 720px) {
-  .app-shell {
-    flex-direction: column;
+.content {
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--fc-border);
+  background: var(--fc-surface);
+
+  .logo {
+    margin-bottom: 0;
+  }
+}
+
+.menu-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--fc-text-secondary);
+  border-radius: var(--fc-radius-sm);
+  padding: 6px;
+
+  &:hover {
+    color: var(--fc-text-primary);
+    background: var(--fc-card-hover);
   }
 
-  .sidebar {
-    width: 100%;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
-    border-right: none;
-    border-bottom: 1px solid var(--fc-border);
-  }
-
-  nav {
-    flex-direction: row;
-  }
-
-  .nav-section-label {
-    display: none;
-  }
-
-  .user-card {
-    margin-top: 0;
+  &:focus-visible {
+    outline: 2px solid var(--fc-border-focus);
+    outline-offset: 2px;
   }
 }

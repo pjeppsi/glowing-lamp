@@ -1,5 +1,10 @@
-<div class="app-shell">
-  <aside class="sidebar">
+<mat-sidenav-container class="app-shell">
+  <mat-sidenav
+    class="sidebar"
+    [mode]="isMobile() ? 'over' : 'side'"
+    [opened]="!isMobile() || mobileMenuOpen()"
+    (closed)="closeMobileMenu()"
+  >
     <div class="logo">
       <mat-icon>bolt</mat-icon>
       <span>Fitness Challenge</span>
@@ -7,7 +12,12 @@
 
     <nav>
       <span class="nav-section-label">Menu</span>
-      <a routerLink="/leaderboard" routerLinkActive="active" class="nav-item">
+      <a
+        routerLink="/leaderboard"
+        routerLinkActive="active"
+        class="nav-item"
+        (click)="closeMobileMenu()"
+      >
         <mat-icon>leaderboard</mat-icon>
         <span>Leaderboard</span>
       </a>
@@ -16,6 +26,7 @@
           [routerLink]="['/dashboard', user.id]"
           routerLinkActive="active"
           class="nav-item"
+          (click)="closeMobileMenu()"
         >
           <mat-icon>bar_chart</mat-icon>
           <span>Dashboard</span>
@@ -39,10 +50,35 @@
           <mat-icon>logout</mat-icon>
         </button>
       </div>
+    } @else {
+      <a
+        routerLink="/register"
+        class="register-cta"
+        (click)="closeMobileMenu()"
+      >
+        <mat-icon>person_add</mat-icon>
+        <span>Register</span>
+      </a>
     }
-  </aside>
+  </mat-sidenav>
 
-  <main class="content">
+  <mat-sidenav-content class="content">
+    @if (isMobile()) {
+      <div class="mobile-topbar">
+        <button
+          type="button"
+          class="menu-toggle"
+          (click)="toggleMobileMenu()"
+          aria-label="Toggle menu"
+        >
+          <mat-icon>menu</mat-icon>
+        </button>
+        <div class="logo">
+          <mat-icon>bolt</mat-icon>
+          <span>Fitness Challenge</span>
+        </div>
+      </div>
+    }
     <router-outlet />
-  </main>
-</div>
+  </mat-sidenav-content>
+</mat-sidenav-container>
