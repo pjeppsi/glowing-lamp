@@ -1,1 +1,143 @@
-<p>dashboard works!</p>
+<div class="page-container">
+  <div class="page-header">
+    <h1>
+      <mat-icon>dashboard</mat-icon>
+      @if (user(); as u) {
+        {{ u.firstName }} {{ u.lastName }}'s Dashboard
+      } @else {
+        Dashboard
+      }
+    </h1>
+    @if (isOwnDashboard()) {
+      <button mat-raised-button color="primary" (click)="openLogActivityDialog()">
+        <mat-icon>directions_run</mat-icon>
+        Log Activity
+      </button>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <mat-icon>bolt</mat-icon>
+      <span>Loading dashboard…</span>
+    </div>
+  } @else if (error()) {
+    <div class="error-state">
+      <mat-icon>error_outline</mat-icon>
+      <span>Couldn't load this dashboard. Please try again.</span>
+    </div>
+  } @else {
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-icon-wrap purple"><mat-icon>emoji_events</mat-icon></div>
+        <div>
+          <div class="stat-value">{{ totalPoints() }}</div>
+          <div class="stat-label">Total Points</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon-wrap green"><mat-icon>directions_run</mat-icon></div>
+        <div>
+          <div class="stat-value">{{ totalActivities() }}</div>
+          <div class="stat-label">Total Activities</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon-wrap amber"><mat-icon>star</mat-icon></div>
+        <div>
+          <div class="stat-value">{{ favoriteSport() }}</div>
+          <div class="stat-label">Favorite Sport</div>
+        </div>
+      </div>
+    </div>
+
+    @if (activities().length === 0) {
+      <div class="empty-state">
+        No activities logged yet.
+        @if (isOwnDashboard()) {
+          Use "Log Activity" to add your first one.
+        }
+      </div>
+    } @else {
+      <div class="chart-row">
+        <div class="chart-card">
+          <h2>Activity Volume Over Time</h2>
+          <div class="chart-wrap">
+            <canvas
+              baseChart
+              [type]="'line'"
+              [data]="volumeChartData()"
+              [options]="volumeChartOptions"
+            ></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h2>Sport Breakdown</h2>
+          <div class="chart-wrap">
+            <canvas
+              baseChart
+              [type]="'bar'"
+              [data]="breakdownChartData()"
+              [options]="breakdownChartOptions"
+            ></canvas>
+          </div>
+          <ul class="breakdown-legend">
+            @for (row of sportBreakdown(); track row.label) {
+              <li>
+                <span class="swatch" [style.background]="row.color"></span>
+                <span class="legend-label">{{ row.label }}</span>
+                <span class="legend-value">{{ row.count }} ({{ row.percentage }}%)</span>
+              </li>
+            }
+          </ul>
+        </div>
+      </div>
+
+      <div class="chart-card heatmap-card">
+        <h2>Last 28 Days</h2>
+        <div class="heatmap">
+          @for (day of heatmapDays(); track day.date) {
+            <div
+              class="heatmap-cell"
+              [style.opacity]="day.points > 0 ? 0.25 + day.intensity * 0.75 : 1"
+              [class.empty]="day.points === 0"
+              [title]="day.date + ': ' + day.points + ' points'"
+            ></div>
+          }
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <h2>Recent Activities</h2>
+        <table mat-table [dataSource]="recentActivities()">
+          <ng-container matColumnDef="date">
+            <th mat-header-cell *matHeaderCellDef>Date</th>
+            <td mat-cell *matCellDef="let a">{{ a.dateTime | date: 'mediumDate' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="sport">
+            <th mat-header-cell *matHeaderCellDef>Sport</th>
+            <td mat-cell *matCellDef="let a">
+              <mat-icon class="row-icon">directions_run</mat-icon>
+              {{ a.sport ?? 'Daily Steps' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="metric">
+            <th mat-header-cell *matHeaderCellDef>Metric</th>
+            <td mat-cell *matCellDef="let a">{{ formatMetric(a) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="points">
+            <th mat-header-cell *matHeaderCellDef>Points</th>
+            <td mat-cell *matCellDef="let a" class="points-cell">{{ a.points }}</td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      </div>
+    }
+  }
+</div>

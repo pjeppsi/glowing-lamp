@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { CurrentUserService } from './core/services/current-user.service';
 import { Shell } from './layout/shell/shell';
 
@@ -31,6 +32,7 @@ export const routes: Routes = [
       },
       {
         path: 'dashboard/:userId',
+        providers: [provideCharts(withDefaultRegisterables())],
         loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.Dashboard),
       },
       { path: '**', redirectTo: 'leaderboard' },
