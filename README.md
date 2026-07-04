@@ -2,11 +2,12 @@
 
 Full-stack fitness challenge application: users log activities (running, walking,
 cycling, gym, swimming, or daily steps), the backend normalizes them into a
-unified points system, and a global leaderboard ranks users by total points.
+unified points system, and a global leaderboard ranks users by total points. A
+personal dashboard visualizes each user's activity history.
 
-This is a monorepo. Right now it contains the backend API; an Angular frontend
-will be added under `frontend/` (see [PLAN.md](PLAN.md) for the overall
-direction, including a Docker Compose setup that will run the whole stack).
+This is a monorepo: `backend/` (ASP.NET Core API) and `frontend/` (Angular).
+See [PLAN.md](PLAN.md) for the overall direction, including a planned Docker
+Compose setup to run the whole stack with one command.
 
 ## Tech stack
 
@@ -15,6 +16,7 @@ direction, including a Docker Compose setup that will run the whole stack).
 - **Architecture:** Clean Architecture (Domain / Application / Infrastructure / Api)
 - **Validation:** FluentValidation
 - **API docs:** Swagger UI via Swashbuckle.AspNetCore
+- **Frontend:** Angular 22, Angular Material (dark, Material 3 violet theme), Chart.js via ng2-charts
 
 ## Running the backend locally
 
@@ -33,17 +35,40 @@ Once running:
 - Swagger UI: `https://localhost:<port>/swagger`
 - API base URL: `https://localhost:<port>/api`
 
+## Running the frontend locally
+
+Prerequisites: Node.js ≥22.22 and npm.
+
+```bash
+cd frontend
+npm install
+npm start
+```
+
+Serves on `http://localhost:4200` with a dev-server proxy (`proxy.conf.json`)
+forwarding `/api/*` to the backend at `http://localhost:5236` — run the backend
+first (see above). On first visit you'll be redirected to registration; after
+registering you land on your personal dashboard and can log activities from
+there, or browse the global leaderboard.
+
 ## Running the tests
 
 ```bash
+# Backend
 cd backend
 dotnet test
+
+# Frontend
+cd frontend
+npm test
 ```
 
-This runs both the scoring service unit tests
+The backend suite runs both the scoring service unit tests
 (`FitnessChallenge.Application.Tests`) and the API integration tests
 (`FitnessChallenge.Api.Tests`, using an in-memory SQLite database via
-`WebApplicationFactory`).
+`WebApplicationFactory`). The frontend suite (Vitest, via the Angular CLI)
+covers the client-side leaderboard trend logic and the core feature
+components.
 
 ## API endpoints
 
@@ -79,12 +104,34 @@ This runs both the scoring service unit tests
   read. This avoids concurrent-update races on a shared counter at the cost
   of recomputing the aggregate each time, which is an acceptable trade-off at
   this scale.
-- Leaderboard rank "trend" (up/down movement) is not implemented — the source
-  spec does not define what a trend is measured against (previous day? previous
-  request?), so it's left out rather than guessed at.
+- Leaderboard rank "trend" (up/down movement) has no server-side mechanism —
+  the spec does not define what a trend is measured against (previous day?
+  previous request?), so the backend leaves it out rather than guessing.
+  The frontend computes it client-side instead (see below).
 - There is no authentication/authorization; `userId` is accepted as-is with no
   verification of the caller's identity. Out of scope for this exercise.
 - Duplicate-name detection compares `FirstName`/`LastName` case-insensitively
   using .NET's Unicode-aware `ToUpperInvariant()` on a computed column, not
   SQLite's built-in `NOCASE` collation (which only case-folds ASCII and would
   miss e.g. `"Perić"` vs `"PERIĆ"`).
+
+### Frontend
+
+- **Leaderboard rank trend** is computed client-side: the browser keeps the
+  last-seen rank per user in `localStorage` and diffs it against each new
+  leaderboard response (up / down / same / new). This is a deliberate,
+  documented choice given the backend's trend mechanism is left undefined —
+  it's not persisted or shared across devices/browsers.
+- **"Current user" / identity** is also a `localStorage`-only concept — there's
+  no auth, so registering (or picking a name) simply remembers that user's id
+  in the browser for the "Log Activity" flow and the Dashboard nav link.
+  Anyone can still view any user's dashboard read-only via the leaderboard.
+- **Sport icons** intentionally reuse a single generic icon
+  (`directions_run`) across all sports rather than one icon per sport, per the
+  design handoff's icon catalog (`DESIGN_HANDOFF.md`) — sport identity is
+  carried by the label text and by chart color, not by an icon-per-sport
+  scheme that isn't in the catalog.
+- **Sport breakdown chart** uses activity *count* per sport (not points) —
+  it answers "which sports do you do most," which is what "breakdown of
+  preferred sports" asks for; points-over-time is already covered by the
+  volume chart.

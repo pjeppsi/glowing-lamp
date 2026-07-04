@@ -9,7 +9,7 @@ Monorepo, root-level split:
 
 ```
 /backend    ASP.NET Core Web API (Clean Architecture) — done
-/frontend   Angular app — not started yet
+/frontend   Angular 22 app — done
 /           docker-compose.yml to run both together — not started yet
 ```
 
@@ -17,8 +17,11 @@ Monorepo, root-level split:
 
 - [x] Backend: Domain / Application / Infrastructure / Api layers, EF Core +
       SQLite, FluentValidation, Swagger, unit + integration tests.
-- [ ] Frontend: Angular app with Global Leaderboard and Personal Dashboard
-      views (activity volume over time, sport breakdown charts).
+- [x] Frontend: Angular 22 + Material (dark violet theme per
+      `DESIGN_HANDOFF.md`). Global Leaderboard (with client-side rank trend)
+      and Personal Dashboard (stat cards, activity-volume line chart,
+      sport-breakdown bar chart, 28-day heatmap, recent activities table,
+      Log Activity dialog) — plus a Register flow. Unit tests via Vitest.
 - [ ] Docker: containerize backend and frontend, wire up with
       `docker-compose.yml` so the whole stack runs with one command. SQLite
       db file needs a persistent volume mount so data survives container
