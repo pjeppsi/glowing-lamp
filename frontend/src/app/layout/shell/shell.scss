@@ -12,15 +12,24 @@
   width: var(--fc-sidebar-w);
   background: var(--fc-surface) !important;
   border-right: 1px solid var(--fc-border);
-  display: flex;
-  flex-direction: column;
-  padding: 20px 16px;
-  box-sizing: border-box;
 
   // Sidebar content (logo + a couple of nav links + one card) always fits
   // within the viewport height — no internal scrollbar on desktop.
   height: 100%;
   overflow: hidden;
+}
+
+// mat-sidenav renders its content inside its own internal wrapper (block
+// layout, not flex), so this element — not .sidebar itself — is what needs
+// to be the flex column for "margin-top: auto" to push the last item down.
+.sidebar-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 20px 16px;
+  padding-top: calc(20px + env(safe-area-inset-top));
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  box-sizing: border-box;
 }
 
 .logo {
@@ -190,6 +199,9 @@ nav {
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
+  padding-top: calc(12px + env(safe-area-inset-top));
+  padding-left: calc(16px + env(safe-area-inset-left));
+  padding-right: calc(16px + env(safe-area-inset-right));
   border-bottom: 1px solid var(--fc-border);
   background: var(--fc-surface);
 
