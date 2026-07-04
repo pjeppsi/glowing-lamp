@@ -51,6 +51,19 @@ first (see above). On first visit you'll be redirected to registration; after
 registering you land on your personal dashboard and can log activities from
 there, or browse the global leaderboard.
 
+## Seeding demo data
+
+With the backend running against a fresh (empty) database, `backend/scripts/Seed-Data.ps1`
+registers a fixed set of demo users and logs a randomized-but-realistic activity
+history for each, from 2026-01-01 through today. It talks to the running API
+over HTTP only (same validation and scoring path as the UI), so it doesn't
+touch the database directly.
+
+```powershell
+cd backend/scripts
+./Seed-Data.ps1
+```
+
 ## Running the tests
 
 ```bash
