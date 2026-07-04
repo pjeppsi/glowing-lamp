@@ -59,9 +59,39 @@
         }
       </div>
     } @else {
+      <div class="chart-card">
+        <h2>
+          Sport Profile
+          <mat-icon
+            class="info-icon"
+            tabindex="0"
+            [matTooltip]="sportProfileChartInfo"
+            aria-label="Chart legend"
+            >info_outline</mat-icon
+          >
+        </h2>
+        <div class="chart-wrap radar-wrap">
+          <canvas
+            baseChart
+            [type]="'radar'"
+            [data]="sportProfileChartData()"
+            [options]="sportProfileChartOptions"
+          ></canvas>
+        </div>
+      </div>
+
       <div class="chart-row">
         <div class="chart-card">
-          <h2>Activity Volume Over Time</h2>
+          <h2>
+            Activity Volume Over Time
+            <mat-icon
+              class="info-icon"
+              tabindex="0"
+              [matTooltip]="volumeChartInfo"
+              aria-label="Chart legend"
+              >info_outline</mat-icon
+            >
+          </h2>
           <div class="chart-wrap">
             <canvas
               baseChart
@@ -73,7 +103,16 @@
         </div>
 
         <div class="chart-card">
-          <h2>Sport Breakdown</h2>
+          <h2>
+            Sport Breakdown
+            <mat-icon
+              class="info-icon"
+              tabindex="0"
+              [matTooltip]="breakdownChartInfo"
+              aria-label="Chart legend"
+              >info_outline</mat-icon
+            >
+          </h2>
           <div class="chart-wrap">
             <canvas
               baseChart

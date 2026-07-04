@@ -5,6 +5,11 @@ export type Sport = 'Running' | 'Walking' | 'Cycling' | 'Gym' | 'Swimming';
 
 export const SPORTS: Sport[] = ['Running', 'Walking', 'Cycling', 'Gym', 'Swimming'];
 
+// Sport axis order used by any chart categorizing points/activities by sport
+// — includes the "no sport" Daily Steps bucket, in a fixed, stable order so
+// charts comparing multiple users read the same shape-for-shape.
+export const SPORT_CATEGORIES = [...SPORTS, 'Daily Steps'] as const;
+
 export type MetricKind = 'distance' | 'duration' | 'steps';
 
 export function metricKindForSport(sport: Sport | null): MetricKind {

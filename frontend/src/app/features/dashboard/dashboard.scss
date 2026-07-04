@@ -77,6 +77,9 @@
   margin-bottom: 16px;
 
   h2 {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-size: 0.9rem;
     font-weight: 600;
     color: var(--fc-text-secondary);
@@ -84,9 +87,29 @@
   }
 }
 
+.info-icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  color: var(--fc-text-muted);
+  cursor: help;
+
+  &:focus-visible {
+    outline: 2px solid var(--fc-border-focus);
+    outline-offset: 2px;
+    border-radius: 50%;
+  }
+}
+
 .chart-wrap {
   position: relative;
   height: 220px;
+}
+
+.radar-wrap {
+  height: 280px;
+  max-width: 360px;
+  margin: 0 auto;
 }
 
 .breakdown-legend {

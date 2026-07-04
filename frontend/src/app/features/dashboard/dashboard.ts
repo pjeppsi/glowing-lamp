@@ -6,6 +6,7 @@ import { map } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { ChartConfiguration } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
@@ -14,6 +15,8 @@ import { CurrentUserService } from '../../core/services/current-user.service';
 import { ActivityResponse } from '../../core/models/activity.model';
 import { UserResponse } from '../../core/models/user.model';
 import { CATEGORICAL_CHART_COLORS } from '../../core/models/chart-colors';
+import { SPORT_CATEGORIES } from '../../core/models/sport.model';
+import { monthlyPointTotals } from '../../core/utils/monthly-points';
 import { LogActivityDialog } from './log-activity-dialog/log-activity-dialog';
 
 interface SportBreakdownRow {
@@ -29,7 +32,14 @@ const GRID = 'rgba(255, 255, 255, 0.07)';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [MatIconModule, MatButtonModule, MatTableModule, BaseChartDirective, DatePipe],
+  imports: [
+    MatIconModule,
+    MatButtonModule,
+    MatTableModule,
+    MatTooltipModule,
+    BaseChartDirective,
+    DatePipe,
+  ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
@@ -38,6 +48,12 @@ export class Dashboard {
   private readonly usersApi = inject(UsersApiService);
   private readonly dialog = inject(MatDialog);
   protected readonly currentUserService = inject(CurrentUserService);
+
+  protected readonly volumeChartInfo = 'X axis: month. Y axis: total points earned that month.';
+  protected readonly breakdownChartInfo =
+    'X axis: number of logged activities. Y axis: sport (including Daily Steps).';
+  protected readonly sportProfileChartInfo =
+    'Each axis is a sport (including Daily Steps). Distance from the center: total points earned in that sport.';
 
   protected readonly userId = toSignal(
     this.route.paramMap.pipe(map((params) => params.get('userId')!)),
@@ -101,18 +117,13 @@ export class Dashboard {
   });
 
   protected readonly volumeChartData = computed<ChartConfiguration<'line'>['data']>(() => {
-    const byDay = new Map<string, number>();
-    for (const activity of this.activities()) {
-      const day = activity.dateTime.slice(0, 10);
-      byDay.set(day, (byDay.get(day) ?? 0) + activity.points);
-    }
-    const days = [...byDay.keys()].sort();
+    const { months, totals } = monthlyPointTotals(this.activities());
     return {
-      labels: days,
+      labels: months.map((m) => m.label),
       datasets: [
         {
           label: 'Points',
-          data: days.map((day) => byDay.get(day)!),
+          data: totals,
           borderColor: '#a78bfa',
           backgroundColor: 'rgba(139, 92, 246, 0.15)',
           pointBackgroundColor: '#a78bfa',
@@ -174,6 +185,51 @@ export class Dashboard {
         grid: { color: GRID },
       },
       y: { ticks: { color: MUTED, font: CHART_FONT }, grid: { display: false } },
+    },
+  };
+
+  protected readonly sportProfileChartData = computed<ChartConfiguration<'radar'>['data']>(() => {
+    const pointsByCategory = new Array(SPORT_CATEGORIES.length).fill(0);
+    for (const activity of this.activities()) {
+      const label = activity.sport ?? 'Daily Steps';
+      const index = SPORT_CATEGORIES.indexOf(label as (typeof SPORT_CATEGORIES)[number]);
+      if (index >= 0) {
+        pointsByCategory[index] += activity.points;
+      }
+    }
+    return {
+      labels: [...SPORT_CATEGORIES],
+      datasets: [
+        {
+          label: 'Points',
+          data: pointsByCategory,
+          borderColor: '#a78bfa',
+          backgroundColor: 'rgba(139, 92, 246, 0.2)',
+          pointBackgroundColor: '#a78bfa',
+          pointRadius: 3,
+          pointHoverRadius: 6,
+          borderWidth: 2,
+        },
+      ],
+    };
+  });
+
+  protected readonly sportProfileChartOptions: ChartConfiguration<'radar'>['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+    },
+    scales: {
+      r: {
+        beginAtZero: true,
+        angleLines: { color: GRID },
+        grid: { color: GRID },
+        pointLabels: { color: MUTED, font: CHART_FONT },
+        // Numeric radial tick labels (0/100/200…) clutter a chart this small
+        // without adding much — the shape and hover tooltip carry the value.
+        ticks: { display: false },
+      },
     },
   };
 
