@@ -64,6 +64,15 @@ cd backend/scripts
 ./Seed-Data.ps1
 ```
 
+**Why a script against the running API, not an EF Core seed (`HasData`):** points must be produced by
+`IScoringService`, the same code path a real request goes through — pre-computing them by hand for
+`HasData` would duplicate the scoring formula in two places and risk the two drifting apart. Inserting
+rows straight into the database via EF Core would also skip FluentValidation entirely, so seeded data
+wouldn't actually prove the validation rules hold. `HasData` is meant for a fixed, compile-time-known
+dataset baked into a migration — it doesn't fit "randomized but realistic activity history," which needs
+to vary per run and shouldn't require a new migration just to reseed. Talking to the running API keeps
+demo data on the exact same validation → scoring → persistence path as a real user's request.
+
 ## Running the tests
 
 ```bash
