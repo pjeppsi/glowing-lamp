@@ -100,8 +100,30 @@ nav {
   }
 }
 
-.user-card {
+.theme-toggle {
   margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px;
+  margin-bottom: 4px;
+  border-radius: var(--fc-radius-sm);
+  color: var(--fc-text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+  }
+
+  span {
+    flex: 1;
+  }
+}
+
+.user-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -160,7 +182,6 @@ nav {
 }
 
 .register-cta {
-  margin-top: auto;
   display: flex;
   align-items: center;
   justify-content: center;

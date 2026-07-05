@@ -30,3 +30,9 @@ Monorepo, root-level split:
       survives container restarts. Ports were deliberately shifted (`1`
       prepended to the usual port) to avoid clashing with anything already
       running locally: API `15236`/`17039`, frontend `14200`.
+- [x] Dark/light theme toggle: light theme added as `[data-theme="light"]`
+      override on the same `--fc-*` tokens (dark stays the default), toggled
+      via `ThemeService` + a `mat-slide-toggle` in the sidebar, persisted to
+      `localStorage`. Chart.js colors (categorical palette + axis/grid/accent)
+      are theme-aware too, via `chart-colors.ts` — see `DESIGN_HANDOFF.md`
+      §1/§2 for the full token table and the chart-color caveat.
