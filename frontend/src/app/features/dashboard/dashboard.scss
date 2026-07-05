@@ -68,6 +68,23 @@
   margin-bottom: 16px;
 }
 
+.sport-row {
+  grid-template-columns: 1fr 1.3fr;
+  align-items: stretch;
+
+  .chart-card {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chart-wrap,
+  .radar-wrap {
+    flex: 1;
+    height: auto;
+    margin: 0 auto;
+  }
+}
+
 .chart-card {
   background: var(--fc-card);
   border: 1px solid var(--fc-border);
@@ -84,6 +101,24 @@
     font-weight: 600;
     color: var(--fc-text-secondary);
     margin: 0 0 16px;
+  }
+}
+
+.chart-type-toggle {
+  margin-left: auto;
+  height: 28px;
+
+  ::ng-deep .mat-button-toggle-label-content {
+    line-height: 26px;
+    padding: 0 8px;
+    display: flex;
+    align-items: center;
+  }
+
+  mat-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
   }
 }
 

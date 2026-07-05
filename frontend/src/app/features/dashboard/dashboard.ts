@@ -5,8 +5,10 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatDialog } from '@angular/material/dialog';
 import { ChartConfiguration } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
@@ -14,9 +16,11 @@ import { UsersApiService } from '../../core/services/users-api.service';
 import { CurrentUserService } from '../../core/services/current-user.service';
 import { ActivityResponse } from '../../core/models/activity.model';
 import { UserResponse } from '../../core/models/user.model';
-import { CATEGORICAL_CHART_COLORS } from '../../core/models/chart-colors';
+import { categoricalChartColors, chartThemeColors } from '../../core/models/chart-colors';
+import { CHART_FONT } from '../../core/models/chart-defaults';
 import { SPORT_CATEGORIES } from '../../core/models/sport.model';
 import { monthlyPointTotals } from '../../core/utils/monthly-points';
+import { ThemeService } from '../../core/services/theme.service';
 import { LogActivityDialog } from './log-activity-dialog/log-activity-dialog';
 
 interface SportBreakdownRow {
@@ -26,17 +30,15 @@ interface SportBreakdownRow {
   color: string;
 }
 
-const CHART_FONT = { family: 'Inter', size: 12 };
-const MUTED = '#8b8ba8';
-const GRID = 'rgba(255, 255, 255, 0.07)';
-
 @Component({
   selector: 'app-dashboard',
   imports: [
     MatIconModule,
     MatButtonModule,
+    MatButtonToggleModule,
     MatTableModule,
     MatTooltipModule,
+    MatPaginatorModule,
     BaseChartDirective,
     DatePipe,
   ],
@@ -48,6 +50,7 @@ export class Dashboard {
   private readonly usersApi = inject(UsersApiService);
   private readonly dialog = inject(MatDialog);
   protected readonly currentUserService = inject(CurrentUserService);
+  private readonly themeService = inject(ThemeService);
 
   protected readonly volumeChartInfo = 'X axis: month. Y axis: total points earned that month.';
   protected readonly breakdownChartInfo =
@@ -93,11 +96,37 @@ export class Dashboard {
     return best ?? '—';
   });
 
-  protected readonly recentActivities = computed(() =>
-    [...this.activities()]
-      .sort((a, b) => b.dateTime.localeCompare(a.dateTime))
-      .slice(0, 10),
-  );
+  // Real server-side pagination (Skip/Take in the DB) for the Activity History
+  // table — separate from `activities` above, which stays unpaged because the
+  // charts/stat cards need the user's entire history to aggregate correctly.
+  protected readonly historyItems = signal<ActivityResponse[]>([]);
+  protected readonly historyTotalCount = signal(0);
+  protected readonly historyLoading = signal(false);
+  protected readonly activitiesPageIndex = signal(0);
+  protected readonly activitiesPageSize = signal(10);
+  protected readonly activitiesPageSizeOptions = [5, 10, 25, 50];
+
+  protected onActivitiesPage(event: PageEvent): void {
+    this.activitiesPageIndex.set(event.pageIndex);
+    this.activitiesPageSize.set(event.pageSize);
+    this.loadHistoryPage();
+  }
+
+  private loadHistoryPage(): void {
+    this.historyLoading.set(true);
+    this.usersApi
+      .getActivitiesPage(this.userId(), this.activitiesPageIndex() + 1, this.activitiesPageSize())
+      .subscribe({
+        next: (response) => {
+          this.historyItems.set(response.items);
+          this.historyTotalCount.set(response.totalCount);
+          this.historyLoading.set(false);
+        },
+        error: () => {
+          this.historyLoading.set(false);
+        },
+      });
+  }
 
   protected readonly sportBreakdown = computed<SportBreakdownRow[]>(() => {
     const counts = new Map<string, number>();
@@ -106,27 +135,29 @@ export class Dashboard {
       counts.set(label, (counts.get(label) ?? 0) + 1);
     }
     const total = this.activities().length || 1;
+    const colors = categoricalChartColors(this.themeService.theme());
     return [...counts.entries()]
       .sort((a, b) => b[1] - a[1])
       .map(([label, count], index) => ({
         label,
         count,
         percentage: Math.round((count / total) * 100),
-        color: CATEGORICAL_CHART_COLORS[index % CATEGORICAL_CHART_COLORS.length],
+        color: colors[index % colors.length],
       }));
   });
 
   protected readonly volumeChartData = computed<ChartConfiguration<'line'>['data']>(() => {
     const { months, totals } = monthlyPointTotals(this.activities());
+    const { accent } = chartThemeColors(this.themeService.theme());
     return {
       labels: months.map((m) => m.label),
       datasets: [
         {
           label: 'Points',
           data: totals,
-          borderColor: '#a78bfa',
+          borderColor: accent,
           backgroundColor: 'rgba(139, 92, 246, 0.15)',
-          pointBackgroundColor: '#a78bfa',
+          pointBackgroundColor: accent,
           pointRadius: 3,
           pointHoverRadius: 6,
           borderWidth: 2,
@@ -137,22 +168,27 @@ export class Dashboard {
     };
   });
 
-  protected readonly volumeChartOptions: ChartConfiguration<'line'>['options'] = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: { mode: 'index', intersect: false },
-    },
-    scales: {
-      x: { ticks: { color: MUTED, font: CHART_FONT }, grid: { color: GRID } },
-      y: {
-        beginAtZero: true,
-        ticks: { color: MUTED, font: CHART_FONT },
-        grid: { color: GRID },
+  protected readonly volumeChartOptions = computed<ChartConfiguration<'line'>['options']>(() => {
+    const { muted, grid } = chartThemeColors(this.themeService.theme());
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { mode: 'index', intersect: false },
       },
-    },
-  };
+      scales: {
+        x: { ticks: { color: muted, font: CHART_FONT }, grid: { color: grid } },
+        y: {
+          beginAtZero: true,
+          ticks: { color: muted, font: CHART_FONT },
+          grid: { color: grid },
+        },
+      },
+    };
+  });
+
+  protected readonly breakdownChartType = signal<'bar' | 'pie'>('bar');
 
   protected readonly breakdownChartData = computed<ChartConfiguration<'bar'>['data']>(() => {
     const rows = this.sportBreakdown();
@@ -170,23 +206,54 @@ export class Dashboard {
     };
   });
 
-  protected readonly breakdownChartOptions: ChartConfiguration<'bar'>['options'] = {
-    indexAxis: 'y',
+  protected readonly breakdownChartOptions = computed<ChartConfiguration<'bar'>['options']>(() => {
+    const { muted, grid } = chartThemeColors(this.themeService.theme());
+    return {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { intersect: false },
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          ticks: { color: muted, font: CHART_FONT, stepSize: 1 },
+          grid: { color: grid },
+        },
+        y: { ticks: { color: muted, font: CHART_FONT }, grid: { display: false } },
+      },
+    };
+  });
+
+  protected readonly breakdownPieChartData = computed<ChartConfiguration<'pie'>['data']>(() => {
+    const rows = this.sportBreakdown();
+    return {
+      labels: rows.map((r) => r.label),
+      datasets: [
+        {
+          label: 'Activities',
+          data: rows.map((r) => r.count),
+          backgroundColor: rows.map((r) => r.color),
+          borderWidth: 0,
+        },
+      ],
+    };
+  });
+
+  protected readonly breakdownPieChartOptions: ChartConfiguration<'pie'>['options'] = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
       tooltip: { intersect: false },
     },
-    scales: {
-      x: {
-        beginAtZero: true,
-        ticks: { color: MUTED, font: CHART_FONT, stepSize: 1 },
-        grid: { color: GRID },
-      },
-      y: { ticks: { color: MUTED, font: CHART_FONT }, grid: { display: false } },
-    },
   };
+
+  protected setBreakdownChartType(type: 'bar' | 'pie'): void {
+    this.breakdownChartType.set(type);
+  }
 
   protected readonly sportProfileChartData = computed<ChartConfiguration<'radar'>['data']>(() => {
     const pointsByCategory = new Array(SPORT_CATEGORIES.length).fill(0);
@@ -197,15 +264,16 @@ export class Dashboard {
         pointsByCategory[index] += activity.points;
       }
     }
+    const { accent } = chartThemeColors(this.themeService.theme());
     return {
       labels: [...SPORT_CATEGORIES],
       datasets: [
         {
           label: 'Points',
           data: pointsByCategory,
-          borderColor: '#a78bfa',
+          borderColor: accent,
           backgroundColor: 'rgba(139, 92, 246, 0.2)',
-          pointBackgroundColor: '#a78bfa',
+          pointBackgroundColor: accent,
           pointRadius: 3,
           pointHoverRadius: 6,
           borderWidth: 2,
@@ -214,24 +282,30 @@ export class Dashboard {
     };
   });
 
-  protected readonly sportProfileChartOptions: ChartConfiguration<'radar'>['options'] = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
+  protected readonly sportProfileChartOptions = computed<ChartConfiguration<'radar'>['options']>(
+    () => {
+      const { muted, grid } = chartThemeColors(this.themeService.theme());
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+        },
+        scales: {
+          r: {
+            beginAtZero: true,
+            angleLines: { color: grid },
+            grid: { color: grid },
+            pointLabels: { color: muted, font: CHART_FONT },
+            // Numeric radial tick labels (0/100/200…) clutter a chart this
+            // small without adding much — the shape and hover tooltip carry
+            // the value.
+            ticks: { display: false },
+          },
+        },
+      };
     },
-    scales: {
-      r: {
-        beginAtZero: true,
-        angleLines: { color: GRID },
-        grid: { color: GRID },
-        pointLabels: { color: MUTED, font: CHART_FONT },
-        // Numeric radial tick labels (0/100/200…) clutter a chart this small
-        // without adding much — the shape and hover tooltip carry the value.
-        ticks: { display: false },
-      },
-    },
-  };
+  );
 
   protected readonly heatmapDays = computed(() => {
     const byDay = new Map<string, number>();
@@ -263,6 +337,7 @@ export class Dashboard {
     const userId = this.userId();
     this.loading.set(true);
     this.error.set(false);
+    this.activitiesPageIndex.set(0);
 
     this.usersApi.getById(userId).subscribe({
       next: (user) => {
@@ -271,6 +346,7 @@ export class Dashboard {
           next: (activities) => {
             this.activities.set(activities);
             this.loading.set(false);
+            this.loadHistoryPage();
           },
           error: () => {
             this.error.set(true);
@@ -302,7 +378,9 @@ export class Dashboard {
 
     ref.afterClosed().subscribe((activity) => {
       if (activity) {
+        this.activitiesPageIndex.set(0);
         this.activities.update((current) => [...current, activity]);
+        this.loadHistoryPage();
       }
     });
   }

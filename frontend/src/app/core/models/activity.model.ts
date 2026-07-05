@@ -19,3 +19,10 @@ export interface ActivityIngestRequest {
   distance?: number;
   duration?: string;
 }
+
+export interface ActivitiesPageResponse {
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  items: ActivityResponse[];
+}
