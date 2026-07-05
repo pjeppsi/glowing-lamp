@@ -1,3 +1,21 @@
+.window-select-row {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 8px;
+}
+
+.window-select {
+  width: 160px;
+
+  ::ng-deep .mat-mdc-text-field-wrapper {
+    background: var(--fc-card);
+  }
+}
+
+.trend-dash {
+  color: var(--fc-text-muted);
+}
+
 .table-scroll {
   overflow-x: auto;
   margin-bottom: 16px;
@@ -60,6 +78,12 @@
   font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
+}
+
+.section-divider {
+  margin: 32px 0 24px;
+  border: none;
+  border-top: 1px dashed var(--fc-border);
 }
 
 .comparison-panel {

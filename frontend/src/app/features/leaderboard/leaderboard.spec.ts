@@ -26,7 +26,9 @@ describe('Leaderboard', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
 
-    httpMock.expectOne('/api/leaderboard').flush([]);
+    httpMock
+      .expectOne((req) => req.url === '/api/leaderboard')
+      .flush({ window: 'allTime', page: 1, pageSize: 10, totalCount: 0, entries: [] });
     await fixture.whenStable();
 
     expect(component).toBeTruthy();
@@ -39,10 +41,16 @@ describe('Leaderboard', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
 
-    httpMock.expectOne('/api/leaderboard').flush([
-      { rank: 1, userId: 'u1', firstName: 'Ana', lastName: 'Peric', totalPoints: 500 },
-      { rank: 2, userId: 'u2', firstName: 'Bob', lastName: 'Baker', totalPoints: 300 },
-    ]);
+    httpMock.expectOne((req) => req.url === '/api/leaderboard').flush({
+      window: 'allTime',
+      page: 1,
+      pageSize: 10,
+      totalCount: 2,
+      entries: [
+        { rank: 1, userId: 'u1', firstName: 'Ana', lastName: 'Peric', totalPoints: 500, trend: '-' },
+        { rank: 2, userId: 'u2', firstName: 'Bob', lastName: 'Baker', totalPoints: 300, trend: '-' },
+      ],
+    });
     await fixture.whenStable();
 
     // Simulate what the compare dialog would return.
