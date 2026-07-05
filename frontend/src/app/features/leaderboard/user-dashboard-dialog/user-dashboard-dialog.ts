@@ -38,8 +38,6 @@ interface Slide {
 const SLIDES: Slide[] = [
   { title: 'Overview' },
   { title: 'Sport Profile & Breakdown' },
-  { title: 'Activity Volume Over Time' },
-  { title: 'Last 28 Days' },
   { title: 'Activity History' },
 ];
 
