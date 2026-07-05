@@ -50,6 +50,11 @@ public class ActivityService : IActivityService
         return activities.Select(ToResponse).ToList();
     }
 
+    // Two DB round trips, not N+1 (each query runs once, regardless of user count).
+    // Could be merged into a single LEFT JOIN query for fewer round trips, but that
+    // would require the service to query across repositories directly instead of
+    // through IUserRepository/IActivityRepository — trading layer separation for
+    // one less round trip. Not worth it unless this endpoint becomes a hot path.
     public async Task<IReadOnlyList<LeaderboardEntryResponse>> GetLeaderboardAsync(CancellationToken cancellationToken = default)
     {
         var users = await _userRepository.GetAllAsync(cancellationToken);
