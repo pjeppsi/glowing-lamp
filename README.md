@@ -146,7 +146,12 @@ components.
   steps each on the same day score `floor(50→0)=0` twice (0 points total)
   under per-record flooring, versus `floor(100→100)=1` if the 100 combined
   steps were floored once as a daily sum. This implementation floors per
-  record.
+  record. A concrete consequence: a user who logs 99 steps and then, in a
+  separate record, 1 more step the same day scores 0 points total, versus 1
+  point if they had logged 100 steps in a single record — fragmented entries
+  can lose points relative to one combined entry. We accept this for the
+  scope of this task because the spec does not define daily aggregation
+  across records.
 - `Duration` is stored in the database exactly as `"mm:ss"` (not converted to
   total seconds); the scoring service parses it once, at insert time.
 - `Sport` is persisted as its string name, not EF Core's default integer
