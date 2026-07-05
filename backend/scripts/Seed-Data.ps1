@@ -25,7 +25,7 @@
     then run this script from backend/scripts.
 #>
 param(
-    [string]$ApiBaseUrl = "http://localhost:5236/api",
+    [string]$ApiBaseUrl = "http://localhost:15236/api",
     [datetime]$StartDate = (Get-Date "2026-01-01"),
     [datetime]$EndDate = (Get-Date).Date
 )
@@ -39,7 +39,7 @@ $users = @(
     @{ FirstName = "Luka"; LastName = "Modrić" },
     @{ FirstName = "Mateo"; LastName = "Kovačić" },
     @{ FirstName = "Igor"; LastName = "Matanović" },
-    @{ FirstName = "Željko"; LastName = "Kerum" }
+    @{ FirstName = "Sandro"; LastName = "Sukno" }
 )
 
 # Distance sports: [min, max] km (x100 for two-decimal precision via Get-Random on integers).

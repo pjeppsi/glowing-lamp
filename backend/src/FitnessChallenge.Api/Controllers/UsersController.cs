@@ -45,10 +45,23 @@ public class UsersController : ControllerBase
         return user is null ? NotFound() : Ok(user);
     }
 
+    private const int MaxActivitiesPageSize = 100;
+
+    // Dual response shape, chosen deliberately: dashboard charts/stat cards need
+    // the user's ENTIRE activity history to aggregate correctly (monthly totals,
+    // sport breakdown, heatmap) and call this with no page/pageSize — that path
+    // is unchanged and still returns the bare array. The browsable activity
+    // history table instead passes page/pageSize and gets back a paginated
+    // envelope with TotalCount, backed by a real Skip/Take in the DB.
     [HttpGet("{id:guid}/activities")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetActivities(Guid id, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetActivities(
+        Guid id,
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize,
+        CancellationToken cancellationToken)
     {
         var user = await _userService.GetByIdAsync(id, cancellationToken);
         if (user is null)
@@ -56,7 +69,26 @@ public class UsersController : ControllerBase
             return NotFound();
         }
 
-        var activities = await _activityService.GetActivitiesByUserIdAsync(id, cancellationToken);
-        return Ok(activities);
+        if (page is null && pageSize is null)
+        {
+            var activities = await _activityService.GetActivitiesByUserIdAsync(id, cancellationToken);
+            return Ok(activities);
+        }
+
+        var resolvedPage = page ?? 1;
+        var resolvedPageSize = pageSize ?? 10;
+        if (resolvedPage < 1 || resolvedPageSize is < 1 or > MaxActivitiesPageSize)
+        {
+            return BadRequest($"page must be >= 1 and pageSize must be between 1 and {MaxActivitiesPageSize}.");
+        }
+
+        var (items, totalCount) = await _activityService.GetActivitiesByUserIdPagedAsync(id, resolvedPage, resolvedPageSize, cancellationToken);
+        return Ok(new ActivitiesPageResponse
+        {
+            Page = resolvedPage,
+            PageSize = resolvedPageSize,
+            TotalCount = totalCount,
+            Items = items
+        });
     }
 }

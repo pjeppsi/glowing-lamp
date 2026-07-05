@@ -18,7 +18,8 @@ Monorepo, root-level split:
 - [x] Backend: Domain / Application / Infrastructure / Api layers, EF Core +
       SQLite, FluentValidation, Swagger, unit + integration tests.
 - [x] Frontend: Angular 22 + Material (dark violet theme per
-      `DESIGN_HANDOFF.md`). Global Leaderboard (with client-side rank trend)
+      `DESIGN_HANDOFF.md`). Global Leaderboard (with server-side rank trend,
+      computed live per Today/Week/Month/All Time window)
       and Personal Dashboard (stat cards, activity-volume line chart,
       sport-breakdown bar chart, 28-day heatmap, recent activities table,
       Log Activity dialog) — plus a Register flow. Unit tests via Vitest.
