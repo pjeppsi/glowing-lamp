@@ -178,8 +178,8 @@
   .chart-wrap,
   .radar-wrap {
     flex: 1;
+    width: 100%;
     height: auto;
-    margin: 0 auto;
   }
 }
 
@@ -212,6 +212,10 @@
     align-items: center;
   }
 
+  ::ng-deep .mat-button-toggle-checkbox-wrapper {
+    display: none;
+  }
+
   mat-icon {
     width: 18px;
     height: 18px;
@@ -240,8 +244,6 @@
 
 .radar-wrap {
   height: 320px;
-  max-width: 400px;
-  margin: 0 auto;
 }
 
 .breakdown-legend {
