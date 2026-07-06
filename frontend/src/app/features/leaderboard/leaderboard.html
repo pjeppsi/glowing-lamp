@@ -74,10 +74,10 @@
           </td>
         </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
         <tr
           mat-row
-          *matRowDef="let row; columns: displayedColumns"
+          *matRowDef="let row; columns: displayedColumns()"
           class="clickable-row"
           role="button"
           [attr.aria-label]="'View ' + row.firstName + ' ' + row.lastName + '\'s dashboard'"

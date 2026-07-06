@@ -62,12 +62,14 @@ export class Leaderboard {
   protected readonly loading = signal(true);
   protected readonly error = signal(false);
   protected readonly entries = signal<LeaderboardEntryResponse[]>([]);
-  protected readonly displayedColumns = ['rank', 'name', 'points', 'trend'];
   protected readonly window = signal<LeaderboardWindow>('allTime');
+  protected readonly displayedColumns = computed(() =>
+    this.window() === 'allTime' ? ['rank', 'name', 'points'] : ['rank', 'name', 'points', 'trend'],
+  );
   protected readonly windowOptions: { value: LeaderboardWindow; label: string }[] = [
     { value: 'today', label: 'Today' },
-    { value: 'week', label: 'Week' },
-    { value: 'month', label: 'Month' },
+    { value: 'week', label: 'This Week' },
+    { value: 'month', label: 'This Month' },
     { value: 'allTime', label: 'All Time' },
   ];
 
