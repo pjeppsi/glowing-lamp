@@ -77,4 +77,46 @@ describe('Leaderboard', () => {
       { name: 'Bob Baker', color: '#199e70' },
     ]);
   });
+
+  it('ignores a stale response that resolves after a newer window request', async () => {
+    fixture = TestBed.createComponent(Leaderboard);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    const initialReq = httpMock.expectOne((req) => req.url === '/api/leaderboard');
+
+    component['setWindow']('today');
+    const todayReq = httpMock.expectOne(
+      (req) => req.url === '/api/leaderboard' && req.params.get('window') === 'today',
+    );
+
+    component['setWindow']('week');
+    const weekReq = httpMock.expectOne(
+      (req) => req.url === '/api/leaderboard' && req.params.get('window') === 'week',
+    );
+
+    initialReq.flush({ window: 'allTime', page: 1, pageSize: 10, totalCount: 0, entries: [] });
+
+    // The newer (week) request resolves first...
+    weekReq.flush({
+      window: 'week',
+      page: 1,
+      pageSize: 10,
+      totalCount: 1,
+      entries: [{ rank: 1, userId: 'u1', firstName: 'Week', lastName: 'Winner', totalPoints: 100, trend: 'up' }],
+    });
+    // ...then the older (today) request resolves late and must not clobber it.
+    todayReq.flush({
+      window: 'today',
+      page: 1,
+      pageSize: 10,
+      totalCount: 1,
+      entries: [{ rank: 1, userId: 'u2', firstName: 'Today', lastName: 'Stale', totalPoints: 50, trend: 'up' }],
+    });
+    await fixture.whenStable();
+
+    expect(component['entries']()).toEqual([
+      { rank: 1, userId: 'u1', firstName: 'Week', lastName: 'Winner', totalPoints: 100, trend: 'up' },
+    ]);
+  });
 });

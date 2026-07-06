@@ -68,6 +68,16 @@
   flex: 1;
 }
 
+.slide {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  &[hidden] {
+    display: none;
+  }
+}
+
 .slide-dots {
   display: flex;
   justify-content: center;
@@ -100,7 +110,7 @@
 .stat-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap: 20px;
 }
 
 .stat-card {

@@ -119,17 +119,31 @@ export class Leaderboard {
     this.load();
   }
 
+  // Guards against a stale response overwriting a newer one when load() is
+  // called again (window/page change) before an in-flight request resolves —
+  // network order isn't guaranteed to match request order, so an older
+  // request finishing last would otherwise clobber the table with data for a
+  // window/page that's no longer selected.
+  private loadRequestId = 0;
+
   protected load(): void {
     this.loading.set(true);
     this.error.set(false);
+    const requestId = ++this.loadRequestId;
 
     this.leaderboardApi.get(this.window(), this.pageIndex() + 1, this.pageSize()).subscribe({
       next: (response) => {
+        if (requestId !== this.loadRequestId) {
+          return;
+        }
         this.entries.set(response.entries);
         this.totalCount.set(response.totalCount);
         this.loading.set(false);
       },
       error: () => {
+        if (requestId !== this.loadRequestId) {
+          return;
+        }
         this.error.set(true);
         this.loading.set(false);
       },
