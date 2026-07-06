@@ -16,7 +16,7 @@ import { UserResponse } from '../../../core/models/user.model';
 import { categoricalChartColors, chartThemeColors } from '../../../core/models/chart-colors';
 import { CHART_FONT } from '../../../core/models/chart-defaults';
 import { SPORT_CATEGORIES } from '../../../core/models/sport.model';
-import { monthlyPointTotals } from '../../../core/utils/monthly-points';
+import { yearlyPointTotals } from '../../../core/utils/monthly-points';
 import { ThemeService } from '../../../core/services/theme.service';
 import { LogActivityDialog } from '../../dashboard/log-activity-dialog/log-activity-dialog';
 
@@ -171,7 +171,7 @@ export class UserDashboardDialog {
   });
 
   protected readonly volumeChartData = computed<ChartConfiguration<'line'>['data']>(() => {
-    const { months, totals } = monthlyPointTotals(this.activities());
+    const { months, totals } = yearlyPointTotals(this.activities());
     const { accent } = chartThemeColors(this.themeService.theme());
     return {
       labels: months.map((m) => m.label),
