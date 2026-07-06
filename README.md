@@ -95,6 +95,17 @@ cd backend/scripts
 ./Seed-Data.ps1
 ```
 
+To also see the leaderboard's Today/Week/Month trend indicators (up/down/same/new)
+with a realistic mix instead of everyone reading the same value, run
+`Seed-Trend-Data.ps1` afterwards — it logs activity on both sides of those
+windows' cutoffs for the users `Seed-Data.ps1` just created, forces a
+guaranteed rank overtake between two of them, and registers one brand-new
+user with no prior history to demonstrate the "new" trend:
+
+```powershell
+./Seed-Trend-Data.ps1
+```
+
 **Why a script against the running API, not an EF Core seed (`HasData`):** points must be produced by
 `IScoringService`, the same code path a real request goes through — pre-computing them by hand for
 `HasData` would duplicate the scoring formula in two places and risk the two drifting apart. Inserting
