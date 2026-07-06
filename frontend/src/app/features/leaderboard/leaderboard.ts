@@ -88,6 +88,12 @@ export class Leaderboard {
   protected readonly comparisonChartInfo =
     'X axis: month. Y axis: total points earned that month, one line per selected user.';
 
+  protected readonly trendColumnInfo =
+    '↑ moved up, ↓ moved down, – no change, ★ new on the leaderboard — all compared to the start of the selected window.';
+
+  protected readonly windowSelectInfo =
+    "Compares each user's current rank to their rank at the start of the selected period — it does not filter which activities are shown.";
+
   protected readonly comparisonUsers = signal<LeaderboardEntryResponse[]>([]);
   protected readonly comparisonLoading = signal(false);
   protected readonly comparisonChartData = signal<ChartConfiguration<'line'>['data'] | null>(null);
@@ -195,6 +201,26 @@ export class Leaderboard {
       default:
         return `No change this ${this.window()}`;
     }
+  }
+
+  // Richer than trendLabel() — includes the actual previous rank/points when
+  // the server provided them, falling back to the short label for allTime/new
+  // entries where there's no prior state to report.
+  protected trendTooltip(entry: LeaderboardEntryResponse): string {
+    if (entry.previousRank === undefined || entry.previousPoints === undefined) {
+      return this.trendLabel(entry.trend);
+    }
+
+    const spots = Math.abs(entry.positionChange ?? 0);
+    const spotsLabel =
+      entry.positionChange && entry.positionChange !== 0
+        ? `, ${spots} spot${spots === 1 ? '' : 's'} ${entry.positionChange > 0 ? 'up' : 'down'}`
+        : '';
+
+    return (
+      `Was #${entry.previousRank} (${entry.previousPoints} pts) → ` +
+      `now #${entry.rank} (${entry.totalPoints} pts)${spotsLabel}`
+    );
   }
 
   protected openCompareDialog(): void {
