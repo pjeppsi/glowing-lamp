@@ -9,6 +9,14 @@ export interface LeaderboardEntryResponse {
   // Computed server-side from Activity rows for the requested window. "-" only
   // when window is 'allTime', where there's no prior period to compare against.
   trend: Trend;
+
+  // Undefined exactly when trend is '-' (allTime) or 'new' (no activity before
+  // the window's cutoff, so there's no meaningful prior state to report).
+  previousRank?: number;
+  previousPoints?: number;
+  // previousRank - rank: positive means moved up that many spots, negative
+  // means moved down. Undefined under the same conditions as above.
+  positionChange?: number;
 }
 
 export type LeaderboardWindow = 'today' | 'week' | 'month' | 'allTime';

@@ -95,7 +95,11 @@ public class ActivityServiceTests
 
         var (leaderboard, _) = await service.GetLeaderboardAsync(LeaderboardWindow.AllTime);
 
-        Assert.Equal("-", leaderboard.Single(e => e.UserId == alice.Id).Trend);
+        var entry = leaderboard.Single(e => e.UserId == alice.Id);
+        Assert.Equal("-", entry.Trend);
+        Assert.Null(entry.PreviousRank);
+        Assert.Null(entry.PreviousPoints);
+        Assert.Null(entry.PositionChange);
     }
 
     [Fact]
@@ -110,7 +114,11 @@ public class ActivityServiceTests
 
         var (leaderboard, _) = await service.GetLeaderboardAsync(LeaderboardWindow.Today);
 
-        Assert.Equal("new", leaderboard.Single(e => e.UserId == alice.Id).Trend);
+        var entry = leaderboard.Single(e => e.UserId == alice.Id);
+        Assert.Equal("new", entry.Trend);
+        Assert.Null(entry.PreviousRank);
+        Assert.Null(entry.PreviousPoints);
+        Assert.Null(entry.PositionChange);
     }
 
     [Fact]
@@ -132,8 +140,18 @@ public class ActivityServiceTests
 
         var (leaderboard, _) = await service.GetLeaderboardAsync(LeaderboardWindow.Week);
 
-        Assert.Equal("up", leaderboard.Single(e => e.UserId == alice.Id).Trend);
-        Assert.Equal("down", leaderboard.Single(e => e.UserId == bob.Id).Trend);
+        var aliceEntry = leaderboard.Single(e => e.UserId == alice.Id);
+        var bobEntry = leaderboard.Single(e => e.UserId == bob.Id);
+
+        Assert.Equal("up", aliceEntry.Trend);
+        Assert.Equal(2, aliceEntry.PreviousRank);
+        Assert.Equal(50, aliceEntry.PreviousPoints);
+        Assert.Equal(1, aliceEntry.PositionChange);
+
+        Assert.Equal("down", bobEntry.Trend);
+        Assert.Equal(1, bobEntry.PreviousRank);
+        Assert.Equal(100, bobEntry.PreviousPoints);
+        Assert.Equal(-1, bobEntry.PositionChange);
     }
 
     private sealed class FakeUserRepository(params User[] users) : IUserRepository
