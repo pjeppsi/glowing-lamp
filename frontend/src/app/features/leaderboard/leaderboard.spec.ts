@@ -26,7 +26,9 @@ describe('Leaderboard', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
 
-    httpMock.expectOne('/api/leaderboard').flush([]);
+    httpMock
+      .expectOne((req) => req.url === '/api/leaderboard')
+      .flush({ window: 'allTime', page: 1, pageSize: 10, totalCount: 0, entries: [] });
     await fixture.whenStable();
 
     expect(component).toBeTruthy();
@@ -39,10 +41,16 @@ describe('Leaderboard', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
 
-    httpMock.expectOne('/api/leaderboard').flush([
-      { rank: 1, userId: 'u1', firstName: 'Ana', lastName: 'Peric', totalPoints: 500 },
-      { rank: 2, userId: 'u2', firstName: 'Bob', lastName: 'Baker', totalPoints: 300 },
-    ]);
+    httpMock.expectOne((req) => req.url === '/api/leaderboard').flush({
+      window: 'allTime',
+      page: 1,
+      pageSize: 10,
+      totalCount: 2,
+      entries: [
+        { rank: 1, userId: 'u1', firstName: 'Ana', lastName: 'Peric', totalPoints: 500, trend: '-' },
+        { rank: 2, userId: 'u2', firstName: 'Bob', lastName: 'Baker', totalPoints: 300, trend: '-' },
+      ],
+    });
     await fixture.whenStable();
 
     // Simulate what the compare dialog would return.
@@ -67,6 +75,48 @@ describe('Leaderboard', () => {
     expect(component['comparisonLegend']()).toEqual([
       { name: 'Ana Peric', color: '#3987e5' },
       { name: 'Bob Baker', color: '#199e70' },
+    ]);
+  });
+
+  it('ignores a stale response that resolves after a newer window request', async () => {
+    fixture = TestBed.createComponent(Leaderboard);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    const initialReq = httpMock.expectOne((req) => req.url === '/api/leaderboard');
+
+    component['setWindow']('today');
+    const todayReq = httpMock.expectOne(
+      (req) => req.url === '/api/leaderboard' && req.params.get('window') === 'today',
+    );
+
+    component['setWindow']('week');
+    const weekReq = httpMock.expectOne(
+      (req) => req.url === '/api/leaderboard' && req.params.get('window') === 'week',
+    );
+
+    initialReq.flush({ window: 'allTime', page: 1, pageSize: 10, totalCount: 0, entries: [] });
+
+    // The newer (week) request resolves first...
+    weekReq.flush({
+      window: 'week',
+      page: 1,
+      pageSize: 10,
+      totalCount: 1,
+      entries: [{ rank: 1, userId: 'u1', firstName: 'Week', lastName: 'Winner', totalPoints: 100, trend: 'up' }],
+    });
+    // ...then the older (today) request resolves late and must not clobber it.
+    todayReq.flush({
+      window: 'today',
+      page: 1,
+      pageSize: 10,
+      totalCount: 1,
+      entries: [{ rank: 1, userId: 'u2', firstName: 'Today', lastName: 'Stale', totalPoints: 50, trend: 'up' }],
+    });
+    await fixture.whenStable();
+
+    expect(component['entries']()).toEqual([
+      { rank: 1, userId: 'u1', firstName: 'Week', lastName: 'Winner', totalPoints: 100, trend: 'up' },
     ]);
   });
 });

@@ -34,6 +34,9 @@ describe('Dashboard', () => {
       .expectOne('/api/users/u1')
       .flush({ id: 'u1', firstName: 'Ana', lastName: 'Peric' });
     httpMock.expectOne('/api/users/u1/activities').flush([]);
+    httpMock
+      .expectOne((req) => req.url === '/api/users/u1/activities' && req.params.has('page'))
+      .flush({ page: 1, pageSize: 10, totalCount: 0, items: [] });
     await fixture.whenStable();
   });
 

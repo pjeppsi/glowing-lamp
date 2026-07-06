@@ -4,15 +4,25 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { map } from 'rxjs';
 import { CurrentUserService } from '../../core/services/current-user.service';
+import { ThemeService } from '../../core/services/theme.service';
 
 const MOBILE_BREAKPOINT = '(max-width: 720px)';
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatIconModule, MatButtonModule, MatSidenavModule],
+  imports: [
+    RouterOutlet,
+    RouterLink,
+    RouterLinkActive,
+    MatIconModule,
+    MatButtonModule,
+    MatSidenavModule,
+    MatSlideToggleModule,
+  ],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
 })
@@ -20,6 +30,7 @@ export class Shell {
   private readonly router = inject(Router);
   private readonly breakpointObserver = inject(BreakpointObserver);
   protected readonly currentUserService = inject(CurrentUserService);
+  protected readonly themeService = inject(ThemeService);
 
   protected readonly isMobile = toSignal(
     this.breakpointObserver.observe(MOBILE_BREAKPOINT).pipe(map((state) => state.matches)),

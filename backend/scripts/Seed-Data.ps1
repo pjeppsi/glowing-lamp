@@ -5,8 +5,8 @@
 
 .DESCRIPTION
     Registers a fixed list of users (skips any that already exist) and, for
-    each day between -StartDate and -EndDate, randomly logs zero or more
-    activities per user with realistic distance/duration/step values. Talks
+    each day between -StartDate and -EndDate, logs one activity per user
+    (occasionally two) with realistic distance/duration/step values. Talks
     to the API over HTTP only, so it goes through the same validation and
     scoring logic as the UI - no direct database access.
 
@@ -25,7 +25,7 @@
     then run this script from backend/scripts.
 #>
 param(
-    [string]$ApiBaseUrl = "http://localhost:5236/api",
+    [string]$ApiBaseUrl = "http://localhost:15236/api",
     [datetime]$StartDate = (Get-Date "2026-01-01"),
     [datetime]$EndDate = (Get-Date).Date
 )
@@ -39,7 +39,7 @@ $users = @(
     @{ FirstName = "Luka"; LastName = "Modrić" },
     @{ FirstName = "Mateo"; LastName = "Kovačić" },
     @{ FirstName = "Igor"; LastName = "Matanović" },
-    @{ FirstName = "Željko"; LastName = "Kerum" }
+    @{ FirstName = "Sandro"; LastName = "Sukno" }
 )
 
 # Distance sports: [min, max] km (x100 for two-decimal precision via Get-Random on integers).
@@ -107,17 +107,15 @@ foreach ($user in $users) {
 
     $activityCount = 0
     for ($date = $StartDate; $date -le $EndDate; $date = $date.AddDays(1)) {
-        # ~55% chance of at least one logged activity that day, occasional double-activity days.
-        if ((Get-Random -Minimum 0.0 -Maximum 1.0) -lt 0.55) {
-            $body = New-RandomActivityBody -UserId $userId -Date $date
-            Invoke-RestMethod -Method Post -Uri "$ApiBaseUrl/activities" -Body ($body | ConvertTo-Json) -ContentType "application/json; charset=utf-8" | Out-Null
-            $activityCount++
+        # Every day gets a logged activity, with occasional double-activity days.
+        $body = New-RandomActivityBody -UserId $userId -Date $date
+        Invoke-RestMethod -Method Post -Uri "$ApiBaseUrl/activities" -Body ($body | ConvertTo-Json) -ContentType "application/json; charset=utf-8" | Out-Null
+        $activityCount++
 
-            if ((Get-Random -Minimum 0.0 -Maximum 1.0) -lt 0.15) {
-                $body2 = New-RandomActivityBody -UserId $userId -Date $date
-                Invoke-RestMethod -Method Post -Uri "$ApiBaseUrl/activities" -Body ($body2 | ConvertTo-Json) -ContentType "application/json; charset=utf-8" | Out-Null
-                $activityCount++
-            }
+        if ((Get-Random -Minimum 0.0 -Maximum 1.0) -lt 0.15) {
+            $body2 = New-RandomActivityBody -UserId $userId -Date $date
+            Invoke-RestMethod -Method Post -Uri "$ApiBaseUrl/activities" -Body ($body2 | ConvertTo-Json) -ContentType "application/json; charset=utf-8" | Out-Null
+            $activityCount++
         }
     }
 

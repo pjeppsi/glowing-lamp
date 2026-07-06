@@ -1,27 +1,28 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, ViewChildren, QueryList, computed, effect, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatDialog } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ChartConfiguration } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
-import { UsersApiService } from '../../core/services/users-api.service';
-import { CurrentUserService } from '../../core/services/current-user.service';
-import { ActivityResponse } from '../../core/models/activity.model';
-import { UserResponse } from '../../core/models/user.model';
-import { categoricalChartColors, chartThemeColors } from '../../core/models/chart-colors';
-import { CHART_FONT } from '../../core/models/chart-defaults';
-import { SPORT_CATEGORIES } from '../../core/models/sport.model';
-import { yearlyPointTotals } from '../../core/utils/monthly-points';
-import { ThemeService } from '../../core/services/theme.service';
-import { LogActivityDialog } from './log-activity-dialog/log-activity-dialog';
+import { UsersApiService } from '../../../core/services/users-api.service';
+import { CurrentUserService } from '../../../core/services/current-user.service';
+import { ActivityResponse } from '../../../core/models/activity.model';
+import { UserResponse } from '../../../core/models/user.model';
+import { categoricalChartColors, chartThemeColors } from '../../../core/models/chart-colors';
+import { CHART_FONT } from '../../../core/models/chart-defaults';
+import { SPORT_CATEGORIES } from '../../../core/models/sport.model';
+import { yearlyPointTotals } from '../../../core/utils/monthly-points';
+import { ThemeService } from '../../../core/services/theme.service';
+import { LogActivityDialog } from '../../dashboard/log-activity-dialog/log-activity-dialog';
+
+export interface UserDashboardDialogData {
+  userId: string;
+}
 
 interface SportBreakdownRow {
   label: string;
@@ -30,8 +31,23 @@ interface SportBreakdownRow {
   color: string;
 }
 
+interface Slide {
+  title: string;
+}
+
+const SLIDES: Slide[] = [
+  { title: 'Overview' },
+  { title: 'Sport Profile & Breakdown' },
+  { title: 'Activity History' },
+];
+
+// A separate component from the routed Dashboard page rather than a shared
+// one: this shows one section at a time (carousel), the page shows all of
+// them stacked, and reusing Dashboard directly would require it to run
+// outside its ActivatedRoute-based userId lookup. The duplication is the
+// deliberate tradeoff for keeping the existing page and its tests untouched.
 @Component({
-  selector: 'app-dashboard',
+  selector: 'app-user-dashboard-dialog',
   imports: [
     MatIconModule,
     MatButtonModule,
@@ -42,26 +58,37 @@ interface SportBreakdownRow {
     BaseChartDirective,
     DatePipe,
   ],
-  templateUrl: './dashboard.html',
-  styleUrl: './dashboard.scss',
+  templateUrl: './user-dashboard-dialog.html',
+  styleUrl: './user-dashboard-dialog.scss',
 })
-export class Dashboard {
-  private readonly route = inject(ActivatedRoute);
+export class UserDashboardDialog {
+  private readonly data = inject<UserDashboardDialogData>(MAT_DIALOG_DATA);
+  private readonly dialogRef = inject(MatDialogRef<UserDashboardDialog>);
   private readonly usersApi = inject(UsersApiService);
   private readonly dialog = inject(MatDialog);
   protected readonly currentUserService = inject(CurrentUserService);
   private readonly themeService = inject(ThemeService);
+
+  protected readonly userId = this.data.userId;
+
+  protected readonly slides = SLIDES;
+  protected readonly currentSlide = signal(0);
+
+  // Slides other than the active one are [hidden] (display:none), not
+  // removed from the DOM — so all canvases are created once, up front, while
+  // the dialog is at its final size. A chart created (or last laid out)
+  // while its container was display:none keeps a stale, near-zero canvas
+  // size from that moment (Chart.js/ng2-charts doesn't auto-detect becoming
+  // visible again), which renders as nonsense — e.g. the volume line chart
+  // degenerating into a single diagonal from corner to corner. Resizing
+  // explicitly whenever the slide changes fixes that up.
+  @ViewChildren(BaseChartDirective) private readonly chartDirectives!: QueryList<BaseChartDirective>;
 
   protected readonly volumeChartInfo = 'X axis: month. Y axis: total points earned that month.';
   protected readonly breakdownChartInfo =
     'X axis: number of logged activities. Y axis: sport (including Daily Steps).';
   protected readonly sportProfileChartInfo =
     'Each axis is a sport (including Daily Steps). Distance from the center: total points earned in that sport.';
-
-  protected readonly userId = toSignal(
-    this.route.paramMap.pipe(map((params) => params.get('userId')!)),
-    { requireSync: true },
-  );
 
   protected readonly loading = signal(true);
   protected readonly error = signal(false);
@@ -70,7 +97,7 @@ export class Dashboard {
   protected readonly displayedColumns = ['date', 'sport', 'metric', 'points'];
 
   protected readonly isOwnDashboard = computed(
-    () => this.currentUserService.user()?.id === this.userId(),
+    () => this.currentUserService.user()?.id === this.userId,
   );
 
   protected readonly totalPoints = computed(() =>
@@ -96,9 +123,6 @@ export class Dashboard {
     return best ?? '—';
   });
 
-  // Real server-side pagination (Skip/Take in the DB) for the Activity History
-  // table — separate from `activities` above, which stays unpaged because the
-  // charts/stat cards need the user's entire history to aggregate correctly.
   protected readonly historyItems = signal<ActivityResponse[]>([]);
   protected readonly historyTotalCount = signal(0);
   protected readonly historyLoading = signal(false);
@@ -115,7 +139,7 @@ export class Dashboard {
   private loadHistoryPage(): void {
     this.historyLoading.set(true);
     this.usersApi
-      .getActivitiesPage(this.userId(), this.activitiesPageIndex() + 1, this.activitiesPageSize())
+      .getActivitiesPage(this.userId, this.activitiesPageIndex() + 1, this.activitiesPageSize())
       .subscribe({
         next: (response) => {
           this.historyItems.set(response.items);
@@ -297,9 +321,6 @@ export class Dashboard {
             angleLines: { color: grid },
             grid: { color: grid },
             pointLabels: { color: muted, font: CHART_FONT },
-            // Numeric radial tick labels (0/100/200…) clutter a chart this
-            // small without adding much — the shape and hover tooltip carry
-            // the value.
             ticks: { display: false },
           },
         },
@@ -315,9 +336,6 @@ export class Dashboard {
     }
     const max = Math.max(1, ...byDay.values());
 
-    // Stay in UTC throughout — activity.dateTime is a UTC ISO string, and
-    // mixing local-time day boundaries with toISOString() here would shift
-    // "today" onto the wrong UTC date for users ahead of/behind UTC.
     const days: { date: string; points: number; intensity: number }[] = [];
     const now = new Date();
     const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
@@ -330,19 +348,27 @@ export class Dashboard {
   });
 
   constructor() {
-    effect(() => this.load());
+    this.load();
+
+    effect(() => {
+      this.currentSlide();
+      // Wait a frame so the browser has actually laid out the now-visible
+      // slide before Chart.js measures its container.
+      requestAnimationFrame(() => {
+        this.chartDirectives?.forEach((directive) => directive.chart?.resize());
+      });
+    });
   }
 
   protected load(): void {
-    const userId = this.userId();
     this.loading.set(true);
     this.error.set(false);
     this.activitiesPageIndex.set(0);
 
-    this.usersApi.getById(userId).subscribe({
+    this.usersApi.getById(this.userId).subscribe({
       next: (user) => {
         this.user.set(user);
-        this.usersApi.getActivities(userId).subscribe({
+        this.usersApi.getActivities(this.userId).subscribe({
           next: (activities) => {
             this.activities.set(activities);
             this.loading.set(false);
@@ -373,7 +399,7 @@ export class Dashboard {
 
   protected openLogActivityDialog(): void {
     const ref = this.dialog.open(LogActivityDialog, {
-      data: { userId: this.userId() },
+      data: { userId: this.userId },
     });
 
     ref.afterClosed().subscribe((activity) => {
@@ -383,5 +409,21 @@ export class Dashboard {
         this.loadHistoryPage();
       }
     });
+  }
+
+  protected close(): void {
+    this.dialogRef.close();
+  }
+
+  protected goToSlide(index: number): void {
+    this.currentSlide.set(index);
+  }
+
+  protected prevSlide(): void {
+    this.currentSlide.update((i) => Math.max(0, i - 1));
+  }
+
+  protected nextSlide(): void {
+    this.currentSlide.update((i) => Math.min(this.slides.length - 1, i + 1));
   }
 }

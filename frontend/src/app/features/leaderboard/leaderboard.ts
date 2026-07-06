@@ -1,29 +1,35 @@
-import { Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { Component, computed, inject, signal } from '@angular/core';
+import { Observable, forkJoin, map, of, switchMap } from 'rxjs';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatDialog } from '@angular/material/dialog';
 import { ChartConfiguration } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import { LeaderboardApiService } from '../../core/services/leaderboard-api.service';
-import { LeaderboardTrendService } from '../../core/services/leaderboard-trend.service';
 import { CurrentUserService } from '../../core/services/current-user.service';
 import { UsersApiService } from '../../core/services/users-api.service';
-import { LeaderboardEntry } from '../../core/models/leaderboard.model';
-import { CATEGORICAL_CHART_COLORS } from '../../core/models/chart-colors';
+import { LeaderboardEntryResponse, LeaderboardWindow } from '../../core/models/leaderboard.model';
+import { categoricalChartColors, chartThemeColors } from '../../core/models/chart-colors';
+import { CHART_FONT } from '../../core/models/chart-defaults';
 import { monthlyPointTotals } from '../../core/utils/monthly-points';
+import { ThemeService } from '../../core/services/theme.service';
 import {
   CompareUsersDialog,
   CompareUsersDialogData,
 } from './compare-users-dialog/compare-users-dialog';
+import { UserDashboardDialog, UserDashboardDialogData } from './user-dashboard-dialog/user-dashboard-dialog';
 
-const CHART_FONT = { family: 'Inter', size: 12 };
-const MUTED = '#8b8ba8';
-const GRID = 'rgba(255, 255, 255, 0.07)';
+// Per-request page size used while fetching the whole roster for the
+// compare-users picker (see fetchAllLeaderboardEntries). This is just a
+// fetch-batch size, not an assumed cap on how many users can exist — however
+// large the roster actually is, every page gets fetched and concatenated.
+const ROSTER_FETCH_PAGE_SIZE = 100;
 
 interface ComparisonLegendItem {
   name: string;
@@ -38,6 +44,9 @@ interface ComparisonLegendItem {
     MatButtonModule,
     MatTooltipModule,
     MatExpansionModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatPaginatorModule,
     BaseChartDirective,
   ],
   templateUrl: './leaderboard.html',
@@ -45,67 +54,122 @@ interface ComparisonLegendItem {
 })
 export class Leaderboard {
   private readonly leaderboardApi = inject(LeaderboardApiService);
-  private readonly trendService = inject(LeaderboardTrendService);
   private readonly usersApi = inject(UsersApiService);
-  private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   protected readonly currentUserService = inject(CurrentUserService);
+  private readonly themeService = inject(ThemeService);
 
   protected readonly loading = signal(true);
   protected readonly error = signal(false);
-  protected readonly entries = signal<LeaderboardEntry[]>([]);
-  protected readonly displayedColumns = ['rank', 'name', 'points', 'trend'];
+  protected readonly entries = signal<LeaderboardEntryResponse[]>([]);
+  protected readonly window = signal<LeaderboardWindow>('allTime');
+  protected readonly displayedColumns = computed(() =>
+    this.window() === 'allTime' ? ['rank', 'name', 'points'] : ['rank', 'name', 'points', 'trend'],
+  );
+  protected readonly windowOptions: { value: LeaderboardWindow; label: string }[] = [
+    { value: 'today', label: 'Today' },
+    { value: 'week', label: 'This Week' },
+    { value: 'month', label: 'This Month' },
+    { value: 'allTime', label: 'All Time' },
+  ];
+
+  protected readonly totalCount = signal(0);
+  protected readonly pageIndex = signal(0);
+  protected readonly pageSize = signal(10);
+  protected readonly pageSizeOptions = [5, 10, 25, 50];
+  protected readonly compareCandidatesLoading = signal(false);
+
+  protected onPage(event: PageEvent): void {
+    this.pageIndex.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
+    this.load();
+  }
 
   protected readonly comparisonChartInfo =
     'X axis: month. Y axis: total points earned that month, one line per selected user.';
 
-  protected readonly comparisonUsers = signal<LeaderboardEntry[]>([]);
+  protected readonly comparisonUsers = signal<LeaderboardEntryResponse[]>([]);
   protected readonly comparisonLoading = signal(false);
   protected readonly comparisonChartData = signal<ChartConfiguration<'line'>['data'] | null>(null);
   protected readonly comparisonLegend = signal<ComparisonLegendItem[]>([]);
 
-  protected readonly comparisonChartOptions: ChartConfiguration<'line'>['options'] = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: { mode: 'index', intersect: false },
+  protected readonly comparisonChartOptions = computed<ChartConfiguration<'line'>['options']>(
+    () => {
+      const { muted, grid } = chartThemeColors(this.themeService.theme());
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { mode: 'index', intersect: false },
+        },
+        scales: {
+          x: { ticks: { color: muted, font: CHART_FONT }, grid: { color: grid } },
+          y: {
+            beginAtZero: true,
+            ticks: { color: muted, font: CHART_FONT },
+            grid: { color: grid },
+          },
+        },
+      };
     },
-    scales: {
-      x: { ticks: { color: MUTED, font: CHART_FONT }, grid: { color: GRID } },
-      y: {
-        beginAtZero: true,
-        ticks: { color: MUTED, font: CHART_FONT },
-        grid: { color: GRID },
-      },
-    },
-  };
+  );
 
   constructor() {
     this.load();
   }
 
+  // Guards against a stale response overwriting a newer one when load() is
+  // called again (window/page change) before an in-flight request resolves —
+  // network order isn't guaranteed to match request order, so an older
+  // request finishing last would otherwise clobber the table with data for a
+  // window/page that's no longer selected.
+  private loadRequestId = 0;
+
   protected load(): void {
     this.loading.set(true);
     this.error.set(false);
+    const requestId = ++this.loadRequestId;
 
-    this.leaderboardApi.get().subscribe({
+    this.leaderboardApi.get(this.window(), this.pageIndex() + 1, this.pageSize()).subscribe({
       next: (response) => {
-        this.entries.set(this.trendService.annotate(response));
+        if (requestId !== this.loadRequestId) {
+          return;
+        }
+        this.entries.set(response.entries);
+        this.totalCount.set(response.totalCount);
         this.loading.set(false);
       },
       error: () => {
+        if (requestId !== this.loadRequestId) {
+          return;
+        }
         this.error.set(true);
         this.loading.set(false);
       },
     });
   }
 
-  protected viewDashboard(userId: string): void {
-    this.router.navigate(['/dashboard', userId]);
+  protected setWindow(window: LeaderboardWindow): void {
+    if (window === this.window()) {
+      return;
+    }
+    this.window.set(window);
+    this.pageIndex.set(0);
+    this.load();
   }
 
-  protected trendIcon(trend: LeaderboardEntry['trend']): string {
+  protected viewDashboard(userId: string): void {
+    this.dialog.open<UserDashboardDialog, UserDashboardDialogData>(UserDashboardDialog, {
+      data: { userId },
+      width: '95vw',
+      maxWidth: '1200px',
+      height: '90vh',
+      panelClass: 'user-dashboard-dialog-panel',
+    });
+  }
+
+  protected trendIcon(trend: LeaderboardEntryResponse['trend']): string {
     switch (trend) {
       case 'up':
         return 'arrow_upward';
@@ -118,39 +182,77 @@ export class Leaderboard {
     }
   }
 
-  protected trendLabel(trend: LeaderboardEntry['trend']): string {
+  protected trendLabel(trend: LeaderboardEntryResponse['trend']): string {
     switch (trend) {
       case 'up':
-        return 'Moved up since your last visit';
+        return `Moved up this ${this.window()}`;
       case 'down':
-        return 'Moved down since your last visit';
+        return `Moved down this ${this.window()}`;
       case 'new':
-        return 'New on the leaderboard';
+        return 'New on the leaderboard for this window';
+      case '-':
+        return 'Trend not applicable for all-time view';
       default:
-        return 'No change since your last visit';
+        return `No change this ${this.window()}`;
     }
   }
 
   protected openCompareDialog(): void {
-    const ref = this.dialog.open<CompareUsersDialog, CompareUsersDialogData, LeaderboardEntry[]>(
-      CompareUsersDialog,
-      {
-        data: {
-          entries: this.entries(),
-          initiallySelected: this.comparisonUsers().map((u) => u.userId),
-        },
-      },
-    );
+    // The visible table only holds the current page — the picker needs the
+    // full roster, so it's fetched separately rather than reusing `entries()`.
+    this.compareCandidatesLoading.set(true);
 
-    ref.afterClosed().subscribe((selected) => {
-      if (selected) {
-        this.comparisonUsers.set(selected);
-        this.loadComparisonChart(selected);
-      }
+    this.fetchAllLeaderboardEntries(this.window()).subscribe({
+      next: (allEntries) => {
+        this.compareCandidatesLoading.set(false);
+
+        const ref = this.dialog.open<CompareUsersDialog, CompareUsersDialogData, LeaderboardEntryResponse[]>(
+          CompareUsersDialog,
+          {
+            data: {
+              entries: allEntries,
+              initiallySelected: this.comparisonUsers().map((u) => u.userId),
+            },
+          },
+        );
+
+        ref.afterClosed().subscribe((selected) => {
+          if (selected) {
+            this.comparisonUsers.set(selected);
+            this.loadComparisonChart(selected);
+          }
+        });
+      },
+      error: () => {
+        this.compareCandidatesLoading.set(false);
+      },
     });
   }
 
-  private loadComparisonChart(users: LeaderboardEntry[]): void {
+  // Fetches every page of the leaderboard for the given window and concatenates
+  // them, regardless of how large the roster actually is — the first request
+  // reveals totalCount, and however many additional pages that implies are then
+  // requested in parallel and merged, so this stays correct whether there are
+  // 9 users or 90,000.
+  private fetchAllLeaderboardEntries(window: LeaderboardWindow): Observable<LeaderboardEntryResponse[]> {
+    return this.leaderboardApi.get(window, 1, ROSTER_FETCH_PAGE_SIZE).pipe(
+      switchMap((first) => {
+        const totalPages = Math.ceil(first.totalCount / ROSTER_FETCH_PAGE_SIZE);
+        if (totalPages <= 1) {
+          return of(first.entries);
+        }
+
+        const remainingPages = Array.from({ length: totalPages - 1 }, (_, i) =>
+          this.leaderboardApi.get(window, i + 2, ROSTER_FETCH_PAGE_SIZE),
+        );
+        return forkJoin(remainingPages).pipe(
+          map((pages) => [...first.entries, ...pages.flatMap((p) => p.entries)]),
+        );
+      }),
+    );
+  }
+
+  private loadComparisonChart(users: LeaderboardEntryResponse[]): void {
     if (users.length === 0) {
       this.comparisonChartData.set(null);
       this.comparisonLegend.set([]);
@@ -177,10 +279,11 @@ export class Leaderboard {
           ),
         );
 
+        const colors = categoricalChartColors(this.themeService.theme());
         const datasets = users.map((user, index) => {
           const { months, totals } = perUserMonthly[index];
           const pointsByKey = new Map(months.map((m, i) => [m.key, totals[i]]));
-          const color = CATEGORICAL_CHART_COLORS[index % CATEGORICAL_CHART_COLORS.length];
+          const color = colors[index % colors.length];
           return {
             label: `${user.firstName} ${user.lastName}`,
             data: sortedKeys.map((key) => pointsByKey.get(key) ?? 0),
@@ -198,7 +301,7 @@ export class Leaderboard {
         this.comparisonLegend.set(
           users.map((user, index) => ({
             name: `${user.firstName} ${user.lastName}`,
-            color: CATEGORICAL_CHART_COLORS[index % CATEGORICAL_CHART_COLORS.length],
+            color: colors[index % colors.length],
           })),
         );
         this.comparisonLoading.set(false);
