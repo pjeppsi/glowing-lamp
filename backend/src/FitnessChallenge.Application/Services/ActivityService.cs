@@ -95,7 +95,7 @@ public class ActivityService : IActivityService
         var currentSummaries = await _activityRepository.GetLeaderboardAsync(before: null, cancellationToken: cancellationToken);
         var currentRanked = RankUsers(users, currentSummaries.ToDictionary(s => s.UserId, s => s.TotalPoints));
 
-        Dictionary<Guid, int>? previousRankByUserId = null;
+        Dictionary<Guid, (int Rank, int TotalPoints)>? previousStateByUserId = null;
         HashSet<Guid>? usersWithPriorActivity = null;
 
         if (window != LeaderboardWindow.AllTime)
@@ -105,13 +105,18 @@ public class ActivityService : IActivityService
             // A user absent from previousSummaries has zero activities before the
             // cutoff — that's how "new" is distinguished from "tied at zero points".
             usersWithPriorActivity = previousSummaries.Select(s => s.UserId).ToHashSet();
-            previousRankByUserId = RankUsers(users, previousSummaries.ToDictionary(s => s.UserId, s => s.TotalPoints))
-                .ToDictionary(x => x.User.Id, x => x.Rank);
+            previousStateByUserId = RankUsers(users, previousSummaries.ToDictionary(s => s.UserId, s => s.TotalPoints))
+                .ToDictionary(x => x.User.Id, x => (x.Rank, x.TotalPoints));
         }
 
         var result = new List<LeaderboardEntryResponse>(currentRanked.Count);
         foreach (var (user, totalPoints, rank) in currentRanked)
         {
+            // "new" (no activity before the cutoff) and AllTime (no cutoff at all)
+            // both mean there's no meaningful prior state to report alongside the trend.
+            var hasPriorState = window != LeaderboardWindow.AllTime && usersWithPriorActivity!.Contains(user.Id);
+            var previousState = hasPriorState ? previousStateByUserId![user.Id] : ((int Rank, int TotalPoints)?)null;
+
             result.Add(new LeaderboardEntryResponse
             {
                 Rank = rank,
@@ -119,7 +124,10 @@ public class ActivityService : IActivityService
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 TotalPoints = totalPoints,
-                Trend = ComputeTrend(window, user.Id, rank, previousRankByUserId, usersWithPriorActivity)
+                Trend = ComputeTrend(window, rank, previousState?.Rank, hasPriorState),
+                PreviousRank = previousState?.Rank,
+                PreviousPoints = previousState?.TotalPoints,
+                PositionChange = previousState is null ? null : previousState.Value.Rank - rank
             });
         }
 
@@ -160,10 +168,9 @@ public class ActivityService : IActivityService
 
     private static string ComputeTrend(
         LeaderboardWindow window,
-        Guid userId,
         int currentRank,
-        Dictionary<Guid, int>? previousRankByUserId,
-        HashSet<Guid>? usersWithPriorActivity)
+        int? previousRank,
+        bool hasPriorState)
     {
         // AllTime has no "before" snapshot to compare against — trend is meaningless.
         if (window == LeaderboardWindow.AllTime)
@@ -171,17 +178,16 @@ public class ActivityService : IActivityService
             return "-";
         }
 
-        if (!usersWithPriorActivity!.Contains(userId))
+        if (!hasPriorState)
         {
             return "new";
         }
 
-        var previousRank = previousRankByUserId![userId];
-        if (currentRank < previousRank)
+        if (currentRank < previousRank!.Value)
         {
             return "up";
         }
-        if (currentRank > previousRank)
+        if (currentRank > previousRank!.Value)
         {
             return "down";
         }
