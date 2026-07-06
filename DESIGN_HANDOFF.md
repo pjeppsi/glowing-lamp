@@ -4,10 +4,10 @@ Referentni dokument za developere: design tokeni, tipografija, ikonografija i UI
 
 ## 1. Tema
 
-- Tamna tema (`theme-type: dark`) na bazi Angular Material 3 (`@angular/material` theming API).
-- Primarna paleta: **Violet** (`mat.$violet-palette`).
+- Tamna (default) i svijetla tema, obje na bazi Angular Material 3 (`@angular/material` theming API). Tamna je i dalje glavni dizajn jezik aplikacije; svijetla je dodana kao alternativa preko korisničkog prekidača, ne kao redizajn.
+- Primarna paleta: **Violet** (`mat.$violet-palette`) u oba moda.
 - Font: **Inter** (300–800), učitan preko Google Fonts u `index.html`.
-- Nema light theme varijante trenutno — ako se dodaje, potrebno je proširiti `:root` tokene s `[data-theme="light"]` override-om.
+- Implementacija: `html` selektor u `src/styles.scss` nosi tamne (default) vrijednosti tokena; `html[data-theme="light"]` override blok prepisuje samo tokene koji se stvarno mijenjaju između tema (boje, sjene — `--fc-radius-*` i `--fc-sidebar-w` su identični u oba moda pa nisu ponovljeni). Atribut postavlja `ThemeService` (`src/app/core/services/theme.service.ts`), signal-based servis koji pamti izbor u `localStorage` (`fc-theme`) i uključuje mali inline `<script>` u `index.html` da spriječi flash pogrešne teme (FOUC) kod povratnika koji su birali light. Prekidač (`mat-slide-toggle`) je u sidebaru (`layout/shell`).
 
 ## 2. Design tokeni (CSS custom properties)
 
@@ -44,6 +44,28 @@ Svi tokeni definirani su u `src/styles.scss` pod `:root`. **Uvijek koristi ove v
 **Pravilo semantike boja (ne mijenjati bez razloga):**
 - `trend-up` → `--fc-green`, `trend-down` → `--fc-red`, `trend-same` → `--fc-text-muted`, `trend-new` → `--fc-amber` (vidi `.trend-*` klase u `styles.scss`).
 - Statistički karticu ikone koriste tri fiksne varijante pozadine: `--purple` (accent-dim), `--green`, `--amber` — vidi `.stat-icon-wrap` u `dashboard.scss` kao referentni pattern za nove stat kartice.
+
+### Boje — svijetla tema (`[data-theme="light"]` override)
+Isti tokeni, druge vrijednosti — samo ono što se stvarno mijenja (sjene su također lakše jer tamne sjene iz dark moda izgledaju kao prljave mrlje na bijeloj pozadini):
+
+| Token | Tamna | Svijetla |
+|---|---|---|
+| `--fc-bg` | `#09090d` | `#f2f2f7` |
+| `--fc-surface` / `--fc-card` | `#111116` / `#16161e` | `#ffffff` / `#ffffff` |
+| `--fc-card-hover` | `#1c1c26` | `#f0f0f5` |
+| `--fc-border` | `rgba(255,255,255,0.07)` | `rgba(0,0,0,0.08)` |
+| `--fc-text-primary` | `#f4f4f8` | `#18181f` |
+| `--fc-text-secondary` | `#8b8ba8` | `#4b4b5e` |
+| `--fc-text-muted` | `#55556a` | `#8b8ba8` |
+| `--fc-accent-light` | `#a78bfa` | `#6d28d9` (tamniji radi kontrasta teksta na bijeloj podlozi) |
+| `--fc-green` / `--fc-red` / `--fc-amber` / `--fc-blue` | `#10b981` / `#ef4444` / `#f59e0b` / `#3b82f6` | `#059669` / `#dc2626` / `#d97706` / `#2563eb` (produbljene za kontrast na bijelom) |
+
+### Grafovi (Chart.js) — paleta ovisna o temi
+Chart.js crta na `<canvas>`, koji ne može čitati CSS custom properties (`var()`) kao DOM elementi — zato boje grafova **nisu** izvedene iz `styles.scss` tokena u runtimeu, nego su duplicirane kao paralelne konstante u `src/app/core/models/chart-colors.ts`:
+- `categoricalChartColors(theme)` — kategorijska paleta (bar/legend boje po korisniku/sportu), zasebna za dark i light, isti redoslijed nijansi u oba (indeks 0 = plava u oba moda) tako da se identitet boje ne mijenja pri promjeni teme. Light varijanta je produbljena verzija dark palete radi vidljivosti na bijeloj kartici.
+- `chartThemeColors(theme)` — `{ muted, grid, accent }` za osi/gridline/liniju grafa; `muted` prati `--fc-text-secondary`, `grid` prati `--fc-border`, `accent` prati `--fc-accent-light`, po istoj logici kao gornja tablica.
+- **Ako se boje u `styles.scss` ikad promijene, ručno uskladi i ove konstante** — nema automatske sinkronizacije.
+- `Dashboard` i `Leaderboard` komponente drže chart `data`/`options` kao Angular `computed()` signale ovisne o `ThemeService.theme()`, tako da se grafovi automatski prebojaju čim korisnik prebaci temu — **osim** legende/grafa za usporedbu korisnika (`comparisonChartData`/`comparisonLegend` u `leaderboard.ts`), koji se pune asinkrono iz HTTP odgovora i zato ne reagiraju na promjenu teme dok se usporedba ponovo ne pokrene (poznato ograničenje, mala UX nedosljednost, ne blokira ništa).
 
 ### Radius
 | Token | Vrijednost |

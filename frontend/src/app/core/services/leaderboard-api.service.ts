@@ -1,13 +1,15 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { LeaderboardEntryResponse } from '../models/leaderboard.model';
+import { LeaderboardResponse, LeaderboardWindow } from '../models/leaderboard.model';
 
 @Injectable({ providedIn: 'root' })
 export class LeaderboardApiService {
   private readonly http = inject(HttpClient);
 
-  get(): Observable<LeaderboardEntryResponse[]> {
-    return this.http.get<LeaderboardEntryResponse[]>('/api/leaderboard');
+  get(window: LeaderboardWindow, page: number, pageSize: number): Observable<LeaderboardResponse> {
+    return this.http.get<LeaderboardResponse>('/api/leaderboard', {
+      params: { window, page, pageSize },
+    });
   }
 }

@@ -35,6 +35,16 @@
         }
       </nav>
 
+      <div class="theme-toggle">
+        <mat-icon>{{ themeService.theme() === 'dark' ? 'dark_mode' : 'light_mode' }}</mat-icon>
+        <span>Dark mode</span>
+        <mat-slide-toggle
+          [checked]="themeService.theme() === 'dark'"
+          (change)="themeService.toggle()"
+          aria-label="Toggle dark mode"
+        />
+      </div>
+
       @if (currentUserService.user(); as user) {
         <div class="user-card">
           <div class="user-info">
@@ -52,11 +62,7 @@
           </button>
         </div>
       } @else {
-        <a
-          routerLink="/register"
-          class="register-cta"
-          (click)="closeMobileMenu()"
-        >
+        <a routerLink="/register" class="register-cta" (click)="closeMobileMenu()">
           <mat-icon>person_add</mat-icon>
           <span>Register</span>
         </a>

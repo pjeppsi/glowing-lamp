@@ -18,7 +18,8 @@ Monorepo, root-level split:
 - [x] Backend: Domain / Application / Infrastructure / Api layers, EF Core +
       SQLite, FluentValidation, Swagger, unit + integration tests.
 - [x] Frontend: Angular 22 + Material (dark violet theme per
-      `DESIGN_HANDOFF.md`). Global Leaderboard (with client-side rank trend)
+      `DESIGN_HANDOFF.md`). Global Leaderboard (with server-side rank trend,
+      computed live per Today/Week/Month/All Time window)
       and Personal Dashboard (stat cards, activity-volume line chart,
       sport-breakdown bar chart, 28-day heatmap, recent activities table,
       Log Activity dialog) — plus a Register flow. Unit tests via Vitest.
@@ -30,3 +31,9 @@ Monorepo, root-level split:
       survives container restarts. Ports were deliberately shifted (`1`
       prepended to the usual port) to avoid clashing with anything already
       running locally: API `15236`/`17039`, frontend `14200`.
+- [x] Dark/light theme toggle: light theme added as `[data-theme="light"]`
+      override on the same `--fc-*` tokens (dark stays the default), toggled
+      via `ThemeService` + a `mat-slide-toggle` in the sidebar, persisted to
+      `localStorage`. Chart.js colors (categorical palette + axis/grid/accent)
+      are theme-aware too, via `chart-colors.ts` — see `DESIGN_HANDOFF.md`
+      §1/§2 for the full token table and the chart-color caveat.

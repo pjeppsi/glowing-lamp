@@ -4,10 +4,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTableModule } from '@angular/material/table';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { LeaderboardEntry, MAX_COMPARISON_USERS } from '../../../core/models/leaderboard.model';
+import { LeaderboardEntryResponse, MAX_COMPARISON_USERS } from '../../../core/models/leaderboard.model';
 
 export interface CompareUsersDialogData {
-  entries: LeaderboardEntry[];
+  entries: LeaderboardEntryResponse[];
   initiallySelected: string[];
 }
 
@@ -18,7 +18,7 @@ export interface CompareUsersDialogData {
   styleUrl: './compare-users-dialog.scss',
 })
 export class CompareUsersDialog {
-  private readonly dialogRef = inject(MatDialogRef<CompareUsersDialog, LeaderboardEntry[]>);
+  private readonly dialogRef = inject(MatDialogRef<CompareUsersDialog, LeaderboardEntryResponse[]>);
   private readonly data = inject<CompareUsersDialogData>(MAT_DIALOG_DATA);
   private readonly snackBar = inject(MatSnackBar);
 

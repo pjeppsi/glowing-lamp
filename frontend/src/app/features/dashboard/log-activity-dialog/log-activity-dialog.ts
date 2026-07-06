@@ -75,14 +75,17 @@ export class LogActivityDialog {
 
     if (kind === 'distance' && !distance) {
       this.form.controls.distance.setErrors({ required: true });
+      this.form.controls.distance.markAsTouched();
       return;
     }
     if (kind === 'duration' && !minutes && !seconds) {
       this.form.controls.minutes.setErrors({ required: true });
+      this.form.controls.minutes.markAsTouched();
       return;
     }
     if (kind === 'steps' && !steps) {
       this.form.controls.steps.setErrors({ required: true });
+      this.form.controls.steps.markAsTouched();
       return;
     }
 

@@ -137,8 +137,8 @@ public class ActivitiesControllerTests : IClassFixture<CustomWebApplicationFacto
         var response = await _client.GetAsync("/api/leaderboard");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var leaderboard = await response.Content.ReadFromJsonAsync<List<LeaderboardEntryResponse>>();
-        var entry = leaderboard!.Single(e => e.UserId == userId);
+        var leaderboard = await response.Content.ReadFromJsonAsync<LeaderboardResponse>(JsonOptions);
+        var entry = leaderboard!.Entries.Single(e => e.UserId == userId);
 
         // floor(550->500)=5 + floor(600->600)=6 = 11, per-record flooring.
         Assert.Equal(11, entry.TotalPoints);

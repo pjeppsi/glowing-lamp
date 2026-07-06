@@ -59,45 +59,24 @@
         }
       </div>
     } @else {
-      <div class="chart-card">
-        <h2>
-          Sport Profile
-          <mat-icon
-            class="info-icon"
-            tabindex="0"
-            [matTooltip]="sportProfileChartInfo"
-            aria-label="Chart legend"
-            >info_outline</mat-icon
-          >
-        </h2>
-        <div class="chart-wrap radar-wrap">
-          <canvas
-            baseChart
-            [type]="'radar'"
-            [data]="sportProfileChartData()"
-            [options]="sportProfileChartOptions"
-          ></canvas>
-        </div>
-      </div>
-
-      <div class="chart-row">
+      <div class="chart-row sport-row">
         <div class="chart-card">
           <h2>
-            Activity Volume Over Time
+            Sport Profile
             <mat-icon
               class="info-icon"
               tabindex="0"
-              [matTooltip]="volumeChartInfo"
+              [matTooltip]="sportProfileChartInfo"
               aria-label="Chart legend"
               >info_outline</mat-icon
             >
           </h2>
-          <div class="chart-wrap">
+          <div class="chart-wrap radar-wrap">
             <canvas
               baseChart
-              [type]="'line'"
-              [data]="volumeChartData()"
-              [options]="volumeChartOptions"
+              [type]="'radar'"
+              [data]="sportProfileChartData()"
+              [options]="sportProfileChartOptions()"
             ></canvas>
           </div>
         </div>
@@ -112,14 +91,36 @@
               aria-label="Chart legend"
               >info_outline</mat-icon
             >
+            <mat-button-toggle-group
+              class="chart-type-toggle"
+              [value]="breakdownChartType()"
+              (change)="setBreakdownChartType($event.value)"
+              aria-label="Sport breakdown chart type"
+            >
+              <mat-button-toggle value="bar" aria-label="Bar chart">
+                <mat-icon>bar_chart</mat-icon>
+              </mat-button-toggle>
+              <mat-button-toggle value="pie" aria-label="Pie chart">
+                <mat-icon>pie_chart</mat-icon>
+              </mat-button-toggle>
+            </mat-button-toggle-group>
           </h2>
           <div class="chart-wrap">
-            <canvas
-              baseChart
-              [type]="'bar'"
-              [data]="breakdownChartData()"
-              [options]="breakdownChartOptions"
-            ></canvas>
+            @if (breakdownChartType() === 'bar') {
+              <canvas
+                baseChart
+                [type]="'bar'"
+                [data]="breakdownChartData()"
+                [options]="breakdownChartOptions()"
+              ></canvas>
+            } @else {
+              <canvas
+                baseChart
+                [type]="'pie'"
+                [data]="breakdownPieChartData()"
+                [options]="breakdownPieChartOptions"
+              ></canvas>
+            }
           </div>
           <ul class="breakdown-legend">
             @for (row of sportBreakdown(); track row.label) {
@@ -130,6 +131,27 @@
               </li>
             }
           </ul>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <h2>
+          Activity Volume Over Time
+          <mat-icon
+            class="info-icon"
+            tabindex="0"
+            [matTooltip]="volumeChartInfo"
+            aria-label="Chart legend"
+            >info_outline</mat-icon
+          >
+        </h2>
+        <div class="chart-wrap">
+          <canvas
+            baseChart
+            [type]="'line'"
+            [data]="volumeChartData()"
+            [options]="volumeChartOptions()"
+          ></canvas>
         </div>
       </div>
 
@@ -149,9 +171,9 @@
       </div>
 
       <div class="chart-card">
-        <h2>Recent Activities</h2>
+        <h2>Activity History</h2>
         <div class="table-scroll">
-        <table mat-table [dataSource]="recentActivities()">
+        <table mat-table [dataSource]="historyItems()">
           <ng-container matColumnDef="date">
             <th mat-header-cell *matHeaderCellDef>Date</th>
             <td mat-cell *matCellDef="let a">{{ a.dateTime | date: 'mediumDate' }}</td>
@@ -179,6 +201,15 @@
           <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
         </table>
         </div>
+        <mat-paginator
+          [length]="historyTotalCount()"
+          [pageIndex]="activitiesPageIndex()"
+          [pageSize]="activitiesPageSize()"
+          [pageSizeOptions]="activitiesPageSizeOptions"
+          [disabled]="historyLoading()"
+          (page)="onActivitiesPage($event)"
+          aria-label="Select page of activities"
+        ></mat-paginator>
       </div>
     }
   }
