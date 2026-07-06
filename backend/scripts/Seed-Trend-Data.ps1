@@ -10,6 +10,13 @@
     up/down/same instead of everyone reading "-" (all-time has no cutoff) or
     "same" (no activity actually straddling a cutoff).
 
+    Also forces a guaranteed rank overtake: finds the two highest-scoring
+    seeded users and logs a large steps activity today for whichever is
+    currently behind, so it jumps ahead of the other specifically in the
+    Today/Week windows - without this, whether any two users' relative order
+    actually differs between "now" and "before the window" is left to the
+    random four-bucket amounts above, and could easily show "same" everywhere.
+
     Also registers one brand-new user ("Nova Osoba") with a single activity
     logged today and nothing before it - since Seed-Data.ps1 already backfills
     the other seven users with a full history, none of them can genuinely show
@@ -140,6 +147,46 @@ foreach ($user in $userNames) {
     Add-TrendActivity -UserId $userId -Date $thisWeekDay -Label "this week"
     Add-TrendActivity -UserId $userId -Date $yesterday -Label "yesterday"
     Add-TrendActivity -UserId $userId -Date $today -Label "today"
+}
+
+# The four-bucket activities above are random-sized, so whether anyone's
+# current (all-time) rank actually differs from their pre-window rank is left
+# to chance - two users could easily end up with the same relative order in
+# both snapshots, showing "same" everywhere instead of a genuine swap. To
+# guarantee the UI has at least one visible overtake, find the two
+# highest-scoring seeded users, and log a big enough steps activity today for
+# whichever of the two is currently behind to jump ahead of the other. Since
+# this activity's timestamp is today, it counts toward the "now" total but
+# falls after the Today/Week cutoffs, so it flips the Today and Week rank
+# order for that pair without touching the AllTime total order (which has no
+# "before" snapshot to flip against).
+Write-Host ""
+Write-Host "Forcing a guaranteed rank overtake for the Today/Week windows..."
+$sampleUserIds = $userIdByName.Values | ForEach-Object { $_ }
+$leaderboardAfter = Invoke-RestMethod -Method Get -Uri "$ApiBaseUrl/leaderboard?pageSize=500"
+$topTwo = $leaderboardAfter.entries |
+    Where-Object { $sampleUserIds -contains $_.userId } |
+    Sort-Object -Property totalPoints -Descending |
+    Select-Object -First 2
+
+if ($topTwo.Count -eq 2) {
+    $ahead = $topTwo[0]
+    $behind = $topTwo[1]
+    $gap = [math]::Max(0, $ahead.totalPoints - $behind.totalPoints)
+    $overtakePoints = $gap + 20
+    $overtakeSteps = $overtakePoints * 100
+
+    $overtakeBody = @{
+        userId   = $behind.userId
+        datetime = $today.AddHours(12).ToString("yyyy-MM-ddTHH:mm:ssZ")
+        steps    = $overtakeSteps
+    }
+    Invoke-RestMethod -Method Post -Uri "$ApiBaseUrl/activities" -Body ($overtakeBody | ConvertTo-Json) -ContentType "application/json; charset=utf-8" | Out-Null
+
+    Write-Host "  $($behind.firstName) $($behind.lastName) logged $overtakeSteps steps today (+$overtakePoints pts) to overtake $($ahead.firstName) $($ahead.lastName) (was $gap pts behind) - toggle Today/Week to see the rank swap."
+}
+else {
+    Write-Warning "Not enough seeded users on the leaderboard to force an overtake."
 }
 
 $newFullName = "$($newUser.FirstName) $($newUser.LastName)"
