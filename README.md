@@ -177,10 +177,18 @@ components.
   users tied at the top are both rank 1 and the next distinct score is rank 2,
   not 3. Ties are also broken deterministically by name (last, then first) so
   tied users don't reorder between calls with no underlying data change.
-- Leaderboard rank "trend" (up/down movement) has no server-side mechanism —
-  the spec does not define what a trend is measured against (previous day?
-  previous request?), so the backend leaves it out rather than guessing.
-  The frontend computes it client-side instead (see below).
+- Leaderboard rank "trend" (up/down/same/new) is computed server-side, live,
+  entirely from `Activity` rows. For a given window (Today/Week/Month), "now"
+  is the sum of all activities and "before" is the sum of activities strictly
+  before the window's cutoff; both snapshots are ranked and compared.
+  `AllTime` has no prior period to compare against, so its trend is always
+  `"-"`. The response also exposes `previousRank`, `previousPoints`, and
+  `positionChange` for a richer tooltip instead of a full side-by-side
+  "round-by-round" table (like a football league table showing every
+  matchday's standings) — that would need a persisted per-period ranking
+  snapshot and considerably more work than the tooltip approach. We assume
+  (the spec doesn't say either way) that a same-request tooltip showing where
+  a user ranked before vs. now is sufficient for this exercise's scope.
 - There is no authentication/authorization; `userId` is accepted as-is with no
   verification of the caller's identity. Out of scope for this exercise.
 - Duplicate-name detection compares `FirstName`/`LastName` case-insensitively
@@ -190,12 +198,11 @@ components.
 
 ### Frontend
 
-- **Leaderboard rank trend** is computed client-side: the browser keeps the
-  last-seen rank per user in `localStorage` and diffs it against each new
-  leaderboard response (up / down / same / new). This is a deliberate,
-  documented choice given the backend's trend mechanism is left undefined —
-  it's not persisted or shared across devices/browsers.
-- **"Current user" / identity** is also a `localStorage`-only concept — there's
+- **Leaderboard rank trend** is rendered straight from the API response
+  (`trend`, `previousRank`, `previousPoints`, `positionChange`) — the icon,
+  label, and tooltip are all derived from what the backend already computed;
+  no client-side history or `localStorage` is involved.
+- **"Current user" / identity** is a `localStorage`-only concept — there's
   no auth, so registering (or picking a name) simply remembers that user's id
   in the browser for the "Log Activity" flow and the Dashboard nav link.
   Anyone can still view any user's dashboard read-only via the leaderboard.
